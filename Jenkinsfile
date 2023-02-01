@@ -7,13 +7,12 @@ pipeline {
     stage('Deploy WordPress') {
       steps {
         echo "installing Wordpress"
-        // sh 'id'
+        sh 'id'
         // sh 'sudo chmod +x ./launcher; ./launcher bootstrap app'
         // sh 'docker-compose down'
         // sh 'docker rm $(docker ps -aq) -f'
         sh 'docker-compose version'
         sh 'docker version'
-        sh 'id'
         sh 'docker-compose up -d'
         // sh 'docker-compose ps';
       }
