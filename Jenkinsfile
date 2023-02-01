@@ -13,6 +13,7 @@ pipeline {
         // sh 'docker rm $(docker ps -aq) -f'
         sh 'docker-compose version'
         sh 'docker version'
+        sh 'id'
         sh 'docker-compose up -d'
         // sh 'docker-compose ps';
       }
