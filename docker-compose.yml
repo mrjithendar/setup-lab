@@ -1,42 +1,40 @@
 version: '3'
+
 services:
-  database:
-    image: mysql
-    container_name: database
+  db:
+    image: mysql:8.0
+    container_name: db
     restart: unless-stopped
     env_file: .env
-    # environment:
-    #   - MYSQL_DATABASE=$MYSQL_DB
+    environment:
+      - MYSQL_DATABASE=wordpress
     volumes: 
       - dbdata:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=somewordpress
-      - MYSQL_DATABASE=wordpress
-      - MYSQL_USER=wordpress
-      - MYSQL_PASSWORD=wordpress
     command: '--default-authentication-plugin=mysql_native_password'
     networks:
       - app-network
+
   wordpress:
     depends_on: 
-      - database
-    image: wordpress
+      - db
+    image: wordpress:5.1.1-fpm-alpine
     container_name: wordpress
     restart: unless-stopped
     env_file: .env
     environment:
-      - WORDPRESS_DB_HOST=database
-      - WORDPRESS_DB_USER=wordpress
-      - WORDPRESS_DB_PASSWORD=wordpress
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_USER=$MYSQL_USER
+      - WORDPRESS_DB_PASSWORD=$MYSQL_PASSWORD
       - WORDPRESS_DB_NAME=wordpress
     volumes:
       - wordpress:/var/www/html
     networks:
       - app-network
+
   webserver:
     depends_on:
       - wordpress
-    image: nginx
+    image: nginx:1.15.12-alpine
     container_name: webserver
     restart: unless-stopped
     ports:
@@ -48,6 +46,7 @@ services:
       - certbot-etc:/etc/letsencrypt
     networks:
       - app-network
+
   certbot:
     depends_on:
       - webserver
@@ -56,22 +55,12 @@ services:
     volumes:
       - certbot-etc:/etc/letsencrypt
       - wordpress:/var/www/html
-    command: certonly --webroot --webroot-path=/var/www/html --email contact@techlurn.org --agree-tos --no-eff-email --force-renewal -d techlurn.org -d www.techlurn.org
+    command: certonly --webroot --webroot-path=/var/www/html --email sammy@your_domain --agree-tos --no-eff-email --force-renewal -d your_domain -d www.your_domain
 
-  nexus:
-    image: sonatype/docker-nexus3
-    # image: sonatype/nexus3 #8GB physical memory required
-    container_name: nexus
-    volumes:
-      - "nexus-data:/sonatype-work"
-    ports:
-      - "8081:8081"
-  
 volumes:
   certbot-etc:
   wordpress:
   dbdata:
-  nexus-data:
 
 networks:
   app-network:
