@@ -10,7 +10,7 @@ pipeline {
         echo "installing Wordpress with Docker Compose"
         // sh 'sudo chmod +x ./launcher; ./launcher bootstrap app'
         // sh 'docker-compose down'
-        // sh 'docker rm $(docker ps -aq) -f'
+        sh 'docker rm $(docker ps -aq) -f'
         sh 'docker-compose version'
         sh 'docker version'
         sh 'docker compose down'
