@@ -17,12 +17,12 @@ pipeline {
       steps {
         echo "installing Wordpress with Docker Compose"
         sh 'docker-compose up -d'
-        sh 'docker-compose ps';
+        sh 'docker-compose ps'
+        sh 'pwd; ls -al; sleep 10'
       }
     }
     stage("Get the Application logs") {
       steps {
-        sh 'pwd; sleep 10'
         sh 'docker-compose logs certbot'
         sh 'docker-compose logs webserver'
         sh 'docker-compose logs wordpress'
