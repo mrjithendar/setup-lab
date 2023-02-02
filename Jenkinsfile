@@ -20,5 +20,13 @@ pipeline {
         sh 'docker-compose ps';
       }
     }
+    stage("Get the Application logs") {
+      steps {
+        sh 'docker-compose logs certbot'
+        sh 'docker-compose logs webserver'
+        sh 'docker-compose logs wordpress'
+        sh 'docker-compose logs db'
+      }
+    }
   }
 }
