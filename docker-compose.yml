@@ -22,10 +22,10 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      - WORDPRESS_DB_HOST=$MYSQL_HOST:3306
-      - WORDPRESS_DB_USER=$MYSQL_USER
-      - WORDPRESS_DB_PASSWORD=$MYSQL_PASSWORD
-      - WORDPRESS_DB_NAME=$MYSQL_DB
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_USER=MYSQL_USER
+      - WORDPRESS_DB_PASSWORD=MYSQL_PASSWORD
+      - WORDPRESS_DB_NAME=wordpress
     volumes:
       - wordpress:/var/www/html
     networks:
@@ -39,7 +39,6 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - wordpress:/var/www/html
       - ./nginx-conf:/etc/nginx/conf.d
@@ -55,7 +54,7 @@ services:
     volumes:
       - certbot-etc:/etc/letsencrypt
       - wordpress:/var/www/html
-    command: certonly --webroot --webroot-path=/var/www/html --email contact@jithendar.com --agree-tos --no-eff-email --force-renewal -d jithendar.com -d www.jithendar.com
+    command: certonly --webroot --webroot-path=/var/www/html --email sammy@jithendar.com --agree-tos --no-eff-email --staging -d jithendar.com -d www.jithendar.com
 
 volumes:
   certbot-etc:
