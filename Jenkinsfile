@@ -17,7 +17,6 @@ pipeline {
       steps {
         echo "installing Wordpress with Docker Compose"
         sh 'docker-compose up -d'
-        sh 'docker-compose ps'
         sh 'pwd; ls -al; sleep 10'
       }
     }
@@ -27,6 +26,7 @@ pipeline {
         sh 'docker-compose logs webserver'
         sh 'docker-compose logs wordpress'
         sh 'docker-compose logs db'
+        sh 'docker-compose ps -a'
       }
     }
   }
