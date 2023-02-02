@@ -4,7 +4,7 @@ pipeline {
 
   stages {
 
-    stage("installing Wordpress with Docker Compose") {
+    stage('Checking Docker Version') {
       steps {
         sh 'id'
         sh 'docker-compose version'
