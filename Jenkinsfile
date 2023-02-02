@@ -26,7 +26,7 @@ pipeline {
         sh 'docker-compose logs webserver'
         sh 'docker-compose logs wordpress'
         sh 'docker-compose logs db'
-        sh 'docker-compose ps -a'
+        sh 'docker-compose ps'
       }
     }
   }
