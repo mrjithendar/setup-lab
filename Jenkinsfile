@@ -22,6 +22,7 @@ pipeline {
     }
     stage("Get the Application logs") {
       steps {
+        sh 'pwd; sleep 10'
         sh 'docker-compose logs certbot'
         sh 'docker-compose logs webserver'
         sh 'docker-compose logs wordpress'
