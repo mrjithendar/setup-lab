@@ -55,7 +55,7 @@ services:
     volumes:
       - certbot-etc:/etc/letsencrypt
       - wordpress:/var/www/html
-    command: certonly --webroot --webroot-path=/var/www/html --email contact@techlurn.org --agree-tos --no-eff-email --force-renewal -d techlurn.org -d www.techlurn.org
+    command: certonly --webroot --webroot-path=/var/www/html --email contact@jithendar.com --agree-tos --no-eff-email --force-renewal -d jithendar.com -d www.jithendar.com
 
 volumes:
   certbot-etc:
