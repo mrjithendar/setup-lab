@@ -1,30 +1,36 @@
 version: '3'
+
 services:
   db:
     image: mysql:8.0
     container_name: db
     restart: unless-stopped
-    command: '--default-authentication-plugin=mysql_native_password'
     env_file: .env
     environment:
       - MYSQL_DATABASE=wordpress
     volumes: 
       - dbdata:/var/lib/mysql
+    command: '--default-authentication-plugin=mysql_native_password'
+    networks:
+      - app-network
+
   wordpress:
-    image: wordpress:5-fpm-alpine
-    depends_on:
+    depends_on: 
       - db
+    image: wordpress:5.1.1-fpm-alpine
     container_name: wordpress
     restart: unless-stopped
-    volumes:
-      - wordpress:/var/www/html
-      - /path/to/repo/myTheme/:/var/www/html/wp-content/themes/myTheme
     env_file: .env
     environment:
       - WORDPRESS_DB_HOST=db:3306
       - WORDPRESS_DB_USER=$MYSQL_USER
       - WORDPRESS_DB_PASSWORD=$MYSQL_PASSWORD
       - WORDPRESS_DB_NAME=wordpress
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - app-network
+
   webserver:
     depends_on:
       - wordpress
@@ -36,20 +42,26 @@ services:
       - "443:443"
     volumes:
       - wordpress:/var/www/html
-      - /path/to/nginx-conf-folder/:/etc/nginx/conf.d
-      - certbotdata:/etc/letsencrypt
+      - ./nginx-conf:/etc/nginx/conf.d
+      - certbot-etc:/etc/letsencrypt
     networks:
       - app-network
+
   certbot:
     depends_on:
       - webserver
     image: certbot/certbot
     container_name: certbot
     volumes:
-      - certbotdata:/etc/letsencrypt
+      - certbot-etc:/etc/letsencrypt
       - wordpress:/var/www/html
-    command: certonly --webroot --webroot-path=/var/www/html --email i@jithendar.com --agree-tos --no-eff-email --force-renewal -d jithendar.com -d www.jithendar.com
+    command: certonly --webroot --webroot-path=/var/www/html --email contact@techlurn.org --agree-tos --no-eff-email --force-renewal -d techlurn.org -d www.techlurn.org
+
 volumes:
+  certbot-etc:
   wordpress:
   dbdata:
-  certbotdata:
+
+networks:
+  app-network:
+    driver: bridge
