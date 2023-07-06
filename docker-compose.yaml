@@ -25,7 +25,7 @@ services:
         # volumes_from:
         #     - nginx
         volumes:
-            - nginx
+            # - nginx
             - /var/run/docker.sock:/var/run/docker.sock
             - /var/docker/nginx/acme:/etc/acme.sh
         environment:
