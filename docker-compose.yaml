@@ -1,63 +1,58 @@
-version: '3.3'
-
+version: '3'
 services:
-    nginx:
-        container_name: nginx
-        image: nginxproxy/nginx-proxy
-        restart: unless-stopped
-        ports:
-            - 80:80
-            - 443:443
-        volumes:
-            - /var/run/docker.sock:/tmp/docker.sock:ro
-            - /var/docker/nginx/html:/usr/share/nginx/html
-            - /var/docker/nginx/certs:/etc/nginx/certs
-            - /var/docker/nginx/vhost:/etc/nginx/vhost.d
-        logging:
-            options:
-                max-size: "10m"
-                max-file: "3"
-
-    letsencrypt-companion:
-        container_name: letsencrypt-companion
-        image: jrcs/letsencrypt-nginx-proxy-companion
-        restart: unless-stopped
-        # volumes_from:
-        # - nginx
-        volumes:
-            - /var/run/docker.sock:/tmp/docker.sock:ro #nginx
-            - /var/docker/nginx/html:/usr/share/nginx/html #nginx
-            - /var/docker/nginx/certs:/etc/nginx/certs #nginx
-            - /var/docker/nginx/vhost:/etc/nginx/vhost.d #nginx
-            - /var/run/docker.sock:/var/run/docker.sock
-            - /var/docker/nginx/acme:/etc/acme.sh
-        environment:
-            DEFAULT_EMAIL: contact@techlurn.org
-
-    website:
-        image: wordpress
-        container_name: website
-        volumes:
-            - ./website:/var/www/html
-        environment:
-            WORDPRESS_DB_HOST: website-db:3306
-            WORDPRESS_DB_USER: website
-            WORDPRESS_DB_PASSWORD: password
-            WORDPRESS_DB_NAME: website
-            VIRTUAL_HOST: techlurn.org
-            LETSENCRYPT_HOST: techlurn.org
-        depends_on:
-            - website-db
-        restart: unless-stopped
-
-    website-db:
-        image: mariadb
-        container_name: website-db
-        volumes:
-            - ./website-db:/var/lib/mysql
-        environment:
-            MYSQL_ROOT_PASSWORD: rootpassword
-            MYSQL_DATABASE: website
-            MYSQL_USER: website
-            MYSQL_PASSWORD: password
-        restart: unless-stopped
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: unless-stopped
+    command: '--default-authentication-plugin=mysql_native_password'
+    env_file: .env
+    environment:
+      - MYSQL_DATABASE=wordpress
+    volumes: 
+      - dbdata:/var/lib/mysql
+  wordpress:
+    image: wordpress:5-fpm-alpine
+    depends_on:
+      - db
+    container_name: wordpress
+    restart: unless-stopped
+    volumes:
+      - wordpress:/var/www/html
+      - /path/to/repo/myTheme/:/var/www/html/wp-content/themes/myTheme
+    env_file: .env
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_USER=$MYSQL_USER
+      - WORDPRESS_DB_PASSWORD=$MYSQL_PASSWORD
+      - WORDPRESS_DB_NAME=wordpress
+  webserver:
+    depends_on:
+      - wordpress
+    image: nginx:1.15.12-alpine
+    container_name: webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"  
+      - "443:443"
+    volumes:
+      - wordpress:/var/www/html
+      - /path/to/repo/nginx-conf-folder/:/etc/nginx/conf.d
+  certbot:                                                                                             
+    depends_on:                                                                                        
+      - webserver                                                                                      
+    image: certbot/certbot                                                                             
+    container_name: certbot                                                                            
+    volumes:                                                                                           
+      # we save our directory of keys on our host server                                            
+      - certbotdata:/etc/letsencrypt                                                                   
+      # we bind our wordpress site to the html root                                                 
+      - wordpress:/var/www/html                                                                        
+    # this command will generate the certificate.                                                   
+    # make sure to change your -d and --email flags                                                 
+    command: certonly --webroot --webroot-path=/var/www/html --email contact@techlurn.org --agree-tos --no-eff-email --force-renewal -d                                      domain.com -d www.domain.com                                              
+                                                                                                       
+# add the certbotdata volume down here:                                                             
+volumes:                                                                                               
+  wordpress:                                                                                           
+  dbdata:                                                                                           
+  certbotdata:
