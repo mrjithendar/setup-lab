@@ -1,3 +1,5 @@
+# sudo docker-compose up -d
+# duso docker-compose down
 version: '3.3'
 services:
     nginx:
