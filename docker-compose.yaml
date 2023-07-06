@@ -32,27 +32,24 @@ services:
     container_name: webserver
     restart: unless-stopped
     ports:
-      - "80:80"  
+      - "80:80"
       - "443:443"
     volumes:
       - wordpress:/var/www/html
-      - /path/to/repo/nginx-conf-folder/:/etc/nginx/conf.d
-  certbot:                                                                                             
-    depends_on:                                                                                        
-      - webserver                                                                                      
-    image: certbot/certbot                                                                             
-    container_name: certbot                                                                            
-    volumes:                                                                                           
-      # we save our directory of keys on our host server                                            
-      - certbotdata:/etc/letsencrypt                                                                   
-      # we bind our wordpress site to the html root                                                 
-      - wordpress:/var/www/html                                                                        
-    # this command will generate the certificate.                                                   
-    # make sure to change your -d and --email flags                                                 
-    command: certonly --webroot --webroot-path=/var/www/html --email contach@techlurn.org --agree-tos --no-eff-email --force-renewal -d techlurn.org -d www.techlurn.org
-
-# add the certbotdata volume down here:                                                             
-volumes:                                                                                               
-  wordpress:                                                                                           
-  dbdata:                                                                                           
+      - /path/to/nginx-conf-folder/:/etc/nginx/conf.d
+      - certbotdata:/etc/letsencrypt
+    networks:
+      - app-network
+  certbot:
+    depends_on:
+      - webserver
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbotdata:/etc/letsencrypt
+      - wordpress:/var/www/html
+    command: certonly --webroot --webroot-path=/var/www/html --email contact@techlurn.org --agree-tos --no-eff-email --force-renewal -d techlurn.org -d www.techlurn.org
+volumes:
+  wordpress:
+  dbdata:
   certbotdata:
