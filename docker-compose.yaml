@@ -18,6 +18,8 @@ services:
                 max-file: "3"
 
     letsencrypt-companion:
+        depends_on: 
+        - nginx
         container_name: letsencrypt-companion
         image: jrcs/letsencrypt-nginx-proxy-companion
         restart: unless-stopped
