@@ -38,8 +38,8 @@ services:
       - wordpress:/var/www/html
       - /path/to/nginx-conf-folder/:/etc/nginx/conf.d
       - certbotdata:/etc/letsencrypt
-    networks:
-      - app-network
+    # networks:
+    #   - app-network
   certbot:
     depends_on:
       - webserver
