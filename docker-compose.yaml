@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+    nginx:
+        container_name: nginx
+        image: nginxproxy/nginx-proxy
+        restart: unless-stopped
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock:ro
+            - /var/docker/nginx/html:/usr/share/nginx/html
+            - /var/docker/nginx/certs:/etc/nginx/certs
+            - /var/docker/nginx/vhost:/etc/nginx/vhost.d
+        logging:
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    letsencrypt-companion:
+        container_name: letsencrypt-companion
+        image: jrcs/letsencrypt-nginx-proxy-companion
+        restart: unless-stopped
+        volumes_from:
+            - nginx
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /var/docker/nginx/acme:/etc/acme.sh
+        environment:
+            DEFAULT_EMAIL: contact@techlurn.org
+
+    website:
+        image: wordpress
+        container_name: website
+        volumes:
+            - ./website:/var/www/html
+        environment:
+            WORDPRESS_DB_HOST: website-db:3306
+            WORDPRESS_DB_USER: website
+            WORDPRESS_DB_PASSWORD: password
+            WORDPRESS_DB_NAME: website
+            VIRTUAL_HOST: techlurn.org
+            LETSENCRYPT_HOST: techlurn.org
+        depends_on:
+            - website-db
+        restart: unless-stopped
+
+    website-db:
+        image: mariadb
+        container_name: website-db
+        volumes:
+            - ./website-db:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: website
+            MYSQL_USER: website
+            MYSQL_PASSWORD: password
+        restart: unless-stopped
