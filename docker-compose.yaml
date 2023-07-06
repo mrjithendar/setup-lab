@@ -22,8 +22,8 @@ services:
         container_name: letsencrypt-companion
         image: jrcs/letsencrypt-nginx-proxy-companion
         restart: unless-stopped
-        # volumes_from:
-        #     - nginx
+        volumes_from:
+            - nginx
         volumes:
             # - nginx
             - /var/run/docker.sock:/var/run/docker.sock
