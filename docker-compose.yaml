@@ -3,12 +3,12 @@
 version: '3.3'
 services:
     nginx:
-        container_name: nginx
+        container_name: nginx-jithendar
         image: nginxproxy/nginx-proxy
         restart: unless-stopped
         ports:
-            - 80:80
-            - 443:443
+            - 80:8081
+            - 443:8082
         volumes:
             - /var/run/docker.sock:/tmp/docker.sock:ro
             - /var/docker/nginx/html:/usr/share/nginx/html
@@ -16,14 +16,14 @@ services:
             - /var/docker/nginx/vhost:/etc/nginx/vhost.d
         logging:
             options:
-                awslogs-stream: ngix
+                awslogs-stream: ngix-jithendar
                 # max-size: "10m"
                 # max-file: "3"
 
     letsencrypt-companion:
         depends_on: 
         - nginx
-        container_name: letsencrypt-companion
+        container_name: letsencrypt-companion-jithendar
         image: jrcs/letsencrypt-nginx-proxy-companion
         restart: unless-stopped
         # volumes_from:
@@ -38,10 +38,10 @@ services:
             # - /var/docker/nginx/vhost:/etc/nginx/vhost.d
         environment:
             NGINX_PROXY_CONTAINER: nginx
-            DEFAULT_EMAIL: contact@techlurn.org
+            DEFAULT_EMAIL: contact@jithendar.com
         logging:
             options:
-                awslogs-stream: letsencrypt-companion
+                awslogs-stream: letsencrypt-companion-jithendar
         
     website:
         image: wordpress
@@ -53,18 +53,18 @@ services:
             WORDPRESS_DB_USER: website
             WORDPRESS_DB_PASSWORD: password
             WORDPRESS_DB_NAME: website
-            VIRTUAL_HOST: techlurn.org
-            LETSENCRYPT_HOST: techlurn.org
+            VIRTUAL_HOST: jithendar.com
+            LETSENCRYPT_HOST: jithendar.com
         depends_on:
             - website-db
         restart: unless-stopped
         logging:
             options:
-                awslogs-stream: wordpress
+                awslogs-stream: wordpress-jithendar
 
     website-db:
         image: mariadb
-        container_name: website-db
+        container_name: website-db-jithendar
         volumes:
             - ./website-db:/var/lib/mysql
         environment:
@@ -75,4 +75,4 @@ services:
         restart: unless-stopped
         logging:
             options:
-                awslogs-stream: mariadb
+                awslogs-stream: mariadb-jithendar
