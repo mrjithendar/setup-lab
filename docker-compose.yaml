@@ -1,4 +1,4 @@
-# sudo docker-compose up -d
+# sudo docker-compose up -d #docker
 # duso docker-compose down
 version: '3.3'
 services:
@@ -23,7 +23,7 @@ services:
     letsencrypt-companion:
         depends_on: 
         - nginx
-        container_name: letsencrypt-companion-jithendar
+        container_name: ssl
         image: jrcs/letsencrypt-nginx-proxy-companion
         restart: unless-stopped
         # volumes_from:
