@@ -1,6 +1,6 @@
 # sudo docker-compose up -d #docker
 # duso docker-compose down
-version: '3.3'
+version: '3.9'
 services:
     nginx:
         container_name: nginx
@@ -33,7 +33,7 @@ services:
             - /var/docker/nginx/acme:/etc/acme.sh
             # nginx volumes: below lines can be commented if SSL wordpress not working
             # - /var/run/docker.sock:/tmp/docker.sock:ro
-            # - /var/docker/nginx/html:/usr/share/nginx/html
+            - /var/docker/nginx/html:/usr/share/nginx/html
             - /var/docker/nginx/certs:/etc/nginx/certs
             - /var/docker/nginx/vhost:/etc/nginx/vhost.d
         environment:
