@@ -45,7 +45,7 @@ services:
         
     wordpress:
         image: wordpress
-        container_name: wordpress
+        container_name: ui
         volumes:
             - ./website:/var/www/html
         environment:
