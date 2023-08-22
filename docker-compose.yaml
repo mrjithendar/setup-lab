@@ -41,7 +41,7 @@ services:
             DEFAULT_EMAIL: i@jithendar.com
         # logging:
         #     options:
-        #         awslogs-stream: letsencrypt-companion-jithendar
+        #         awslogs-stream: ssl
         
     website:
         image: wordpress
@@ -53,8 +53,8 @@ services:
             WORDPRESS_DB_USER: website
             WORDPRESS_DB_PASSWORD: password
             WORDPRESS_DB_NAME: website
-            VIRTUAL_HOST: jithendar.com
-            LETSENCRYPT_HOST: jithendar.com
+            VIRTUAL_HOST: techlurn.org
+            LETSENCRYPT_HOST: techlurn.org
         depends_on:
             - website-db
         restart: unless-stopped
