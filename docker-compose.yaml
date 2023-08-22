@@ -43,30 +43,30 @@ services:
         #     options:
         #         awslogs-stream: ssl
         
-    website:
+    wordpress:
         image: wordpress
-        container_name: website
+        container_name: wordpress
         volumes:
             - ./website:/var/www/html
         environment:
-            WORDPRESS_DB_HOST: website-db:3306
+            WORDPRESS_DB_HOST: database:3306
             WORDPRESS_DB_USER: website
             WORDPRESS_DB_PASSWORD: password
             WORDPRESS_DB_NAME: website
             VIRTUAL_HOST: techlurn.org
             LETSENCRYPT_HOST: techlurn.org
         depends_on:
-            - website-db
+            - database
         restart: unless-stopped
         # logging:
         #     options:
-        #         awslogs-stream: wordpress-jithendar
+        #         awslogs-stream: wordpress
 
-    website-db:
+    database:
         image: mariadb
-        container_name: website-db-jithendar
+        container_name: database
         volumes:
-            - ./website-db:/var/lib/mysql
+            - ./database:/var/lib/mysql
         environment:
             MYSQL_ROOT_PASSWORD: rootpassword
             MYSQL_DATABASE: website
