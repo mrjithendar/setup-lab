@@ -7,13 +7,23 @@ services:
         image: nginxproxy/nginx-proxy
         restart: unless-stopped
         ports:
-            - 80:8081
-            - 443:8082
+            - 80:80  # you will need port 80
+            - 443:443  # https
+        # ports:
+        #     - 80:8081
+        #     - 443:8082
         volumes:
+            - conf:/etc/nginx/conf.d
+            - vhost:/etc/nginx/vhost.d
+            - html:/usr/share/nginx/html
+            - dhparam:/etc/nginx/dhparam
+            - certs:/etc/nginx/certs:ro
             - /var/run/docker.sock:/tmp/docker.sock:ro
-            - /var/docker/nginx/html:/usr/share/nginx/html
-            - /var/docker/nginx/certs:/etc/nginx/certs
-            - /var/docker/nginx/vhost:/etc/nginx/vhost.d
+        # volumes:
+        #     - /var/run/docker.sock:/tmp/docker.sock:ro
+        #     - /var/docker/nginx/html:/usr/share/nginx/html
+        #     - /var/docker/nginx/certs:/etc/nginx/certs
+        #     - /var/docker/nginx/vhost:/etc/nginx/vhost.d
         # logging:
         #     options:
                 # awslogs-stream: ngix
@@ -24,21 +34,25 @@ services:
         depends_on: 
         - nginx
         container_name: ssl
-        image: jrcs/letsencrypt-nginx-proxy-companion
+        image: nginxproxy/acme-companion #jrcs/letsencrypt-nginx-proxy-companion
         restart: unless-stopped
+        volumes:
+            - certs:/etc/nginx/certs:rw
+            - acme:/etc/acme.sh
+            - /var/run/docker.sock:/var/run/docker.sock:ro
         # volumes_from:
         #     - nginx
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-            - /var/docker/nginx/acme:/etc/acme.sh
-            # nginx volumes: below lines can be commented if SSL wordpress not working
-            - /var/run/docker.sock:/tmp/docker.sock:ro
-            - /var/docker/nginx/html:/usr/share/nginx/html
-            - /var/docker/nginx/certs:/etc/nginx/certs
-            - /var/docker/nginx/vhost:/etc/nginx/vhost.d
+        # volumes:
+        #     - /var/run/docker.sock:/var/run/docker.sock
+        #     - /var/docker/nginx/acme:/etc/acme.sh
+        # # nginx volumes: below lines can be commented if SSL wordpress not working
+        #     - /var/run/docker.sock:/tmp/docker.sock:ro
+        #     - /var/docker/nginx/html:/usr/share/nginx/html
+        #     - /var/docker/nginx/certs:/etc/nginx/certs
+        #     - /var/docker/nginx/vhost:/etc/nginx/vhost.d
         environment:
-            NGINX_PROXY_CONTAINER: nginx
-            DEFAULT_EMAIL: i@jithendar.com
+        #    NGINX_PROXY_CONTAINER: nginx
+           DEFAULT_EMAIL: i@jithendar.com
         # logging:
         #     options:
         #         awslogs-stream: ssl
@@ -57,7 +71,7 @@ services:
             LETSENCRYPT_HOST: techlurn.org
         depends_on:
             - database
-        restart: unless-stopped
+        restart: always
         # logging:
         #     options:
         #         awslogs-stream: wordpress
