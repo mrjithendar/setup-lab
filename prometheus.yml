@@ -23,7 +23,9 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
-    - targets: ['HOST_IP:8080']
+    - targets: ['170.187.237.74:8080']
 
     # static_configs:
     #      - targets: ['localhost:9090','cadvisor:8082','node-exporter:9100', 'nginx-exporter:9113']
+    # docker run -d --name prometheus -p 9090:9090 -v prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml
+    # docker run -d --name grafana -p 3000:3000 grafana/grafana
