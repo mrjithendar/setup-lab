@@ -1,8 +1,8 @@
-version: "3.3"
+version: "3.9"
 services:
     wordpress:
         container_name: wordpress
-        image: wordpress:php8.2-apache
+        image: wordpress:php8.1-apache
         restart: always
         stdin_open: true
         tty: true
@@ -13,6 +13,7 @@ services:
             WORDPRESS_DB_NAME: db_name
         volumes:
             - wordpress_data:/var/www/html
+            - ./wordpress:/var/www/html
     mariadb:
         container_name: mariadb
         image: mariadb
@@ -25,8 +26,6 @@ services:
         volumes:
             - db_data:/var/lib/mysql
     nginx:
-        depends_on: 
-            - certbot
         container_name: nginx
         image: nginx:latest
         restart: unless-stopped
@@ -40,7 +39,7 @@ services:
     certbot:
         container_name: certbot
         image: certbot/certbot:latest
-        command: certonly --webroot --webroot-path=/var/www/html --email i@jithendar.com --agree-tos --no-eff-email -d jithendar.com -d www.jithendar.com
+        command: certonly --webroot --webroot-path=/var/www/html --email youremail@jithendar.com --agree-tos --no-eff-email -d jithendar.com -d www.jithendar.com
         volumes:
             - ./certbot/conf:/etc/letsencrypt
             - ./certbot/logs:/var/log/letsencrypt
