@@ -2,7 +2,7 @@ version: "3.9"
 services:
   database:
     image: mysql:8.0
-    container_name: db
+    container_name: database
     restart: unless-stopped
     command: '--default-authentication-plugin=mysql_native_password'
     env_file: .env
@@ -35,7 +35,7 @@ services:
         - "443:443"                                                                                      
     volumes:                                                                                           
         - wordpress:/var/www/html
-        - ./conf/default.conf:/etc/nginx/conf.d                                           
+        - ./conf:/etc/nginx/conf.d                                           
         # nginx will need the certificate files certbot will create                                   
         - certbotdata:/etc/letsencrypt                                                                   
     # networks:                                                                                          
