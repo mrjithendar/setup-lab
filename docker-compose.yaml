@@ -38,8 +38,8 @@ services:
         - ./conf/default.conf:/etc/nginx/conf.d                                           
         # nginx will need the certificate files certbot will create                                   
         - certbotdata:/etc/letsencrypt                                                                   
-    networks:                                                                                          
-        - app-network                                                                                                                                                                                 
+    # networks:                                                                                          
+    #     - app-network                                                                                                                                                                                 
   certbot:                                                                                             
     depends_on:                                                                                        
         - nginx                                                                                      
