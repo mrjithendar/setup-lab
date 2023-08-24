@@ -38,7 +38,7 @@ services:
     certbot:
         container_name: certbot
         image: certbot/certbot:latest
-        command: certonly --webroot --webroot-path=/var/www/html --email i@techlurn.org --agree-tos --no-eff-email -d techlurn.org -d www.techlurn.org
+        command: certonly --webroot --webroot-path=/var/www/html --email i@jithendar.com --agree-tos --no-eff-email -d jithendar.com -d www.jithendar.com
         volumes:
             - ./certbot/conf:/etc/letsencrypt
             - ./certbot/logs:/var/log/letsencrypt
