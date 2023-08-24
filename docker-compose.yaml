@@ -58,4 +58,4 @@ services:
 volumes:                                                                                               
   wordpress:                                                                                           
   dbdata:                                                                                           
-#   certbotdata:
+  certbotdata:
