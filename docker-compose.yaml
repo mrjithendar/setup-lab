@@ -35,7 +35,7 @@ services:
         - "443:443"                                                                                      
     volumes:                                                                                           
         - wordpress:/var/www/html
-        - ./conf:/etc/nginx/conf.d                                           
+        - ./nginx/conf/default.conf:/etc/nginx/conf.d                                           
         # nginx will need the certificate files certbot will create                                   
         - certbotdata:/etc/letsencrypt                                                                   
     # networks:                                                                                          
