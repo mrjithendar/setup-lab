@@ -18,8 +18,9 @@ services:
     restart: unless-stopped
     volumes:
       - wordpress:/var/www/html
-      - /path/to/repo/myTheme/:/var/www/html/wp-content/themes/myTheme
-    environment: # env_file: .env
+    #   - /path/to/repo/myTheme/:/var/www/html/wp-content/themes/myTheme
+    # env_file: .env
+    environment: 
       - WORDPRESS_DB_HOST=db:3306
       - WORDPRESS_DB_USER=mysqluser #$MYSQL_USER
       - WORDPRESS_DB_PASSWORD=mysqlpassword #$MYSQL_PASSWORD
