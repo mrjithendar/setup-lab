@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     volumes:
       - wordpress:/var/www/html
-    #   - /path/to/repo/myTheme/:/var/www/html/wp-content/themes/myTheme
+      - ./themes/:/var/www/html/wp-content/themes/
     env_file: .env
     environment: 
       - WORDPRESS_DB_HOST=database
