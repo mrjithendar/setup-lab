@@ -14,7 +14,7 @@ services:
     volumes: 
       - dbdata:/var/lib/mysql
   wordpress:
-    image: wordpress:latest
+    image: wordpress:5-fpm-alpine
     depends_on:
       - database
     container_name: wordpress
