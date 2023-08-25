@@ -25,20 +25,20 @@ services:
       - WORDPRESS_DB_USER=mysqluser #$MYSQL_USER
       - WORDPRESS_DB_PASSWORD=mysqlpassword #$MYSQL_PASSWORD
       - WORDPRESS_DB_NAME=wordpress
-  nginx:                                                                                        
-    depends_on:                                                                                        
-        - wordpress                                                                                      
-    image: nginx:latest                                                                       
-    container_name: nginx                                                                          
-    restart: unless-stopped                                                                            
-    ports:                                                                                             
-        - "80:80"                                                                                        
-        - "443:443"                                                                                      
-    volumes:                                                                                           
-        - wordpress:/var/www/html
-        - ./nginx/conf/:/etc/nginx/conf.d                                           
-        # nginx will need the certificate files certbot will create                                   
-        - certbotdata:/etc/letsencrypt                                                                   
+#   nginx:                                                                                        
+#     depends_on:                                                                                        
+#         - wordpress                                                                                      
+#     image: nginx:latest                                                                       
+#     container_name: nginx                                                                          
+#     restart: unless-stopped                                                                            
+#     ports:                                                                                             
+#         - "80:80"                                                                                        
+#         - "443:443"                                                                                      
+#     volumes:                                                                                           
+#         - wordpress:/var/www/html
+#         - ./nginx/conf/:/etc/nginx/conf.d                                           
+#         # nginx will need the certificate files certbot will create                                   
+#         - certbotdata:/etc/letsencrypt                                                                   
     # networks:                                                                                          
     #     - app-network                                                                                                                                                                                 
   certbot:                                                                                             
