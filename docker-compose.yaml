@@ -1,66 +1,49 @@
 version: "3.9"
 services:
-  database:
-    image: mysql:latest
-    container_name: database
-    restart: unless-stopped
-    command: '--default-authentication-plugin=mysql_native_password'
-    env_file: .env
-    environment:
-       MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
-       MYSQL_DATABASE: $MYSQL_DB_NAME
-       MYSQL_USER: $MYSQL_DB_USER
-       MYSQL_PASSWORD: $MYSQL_DB_PASSWORD
-    volumes: 
-      - dbdata:/var/lib/mysql
-  wordpress:
-    image: wordpress:5-fpm-alpine
-    depends_on:
-      - database
-    container_name: wordpress
-    restart: unless-stopped
-    volumes:
-      - wordpress:/var/www/html
-      - ./themes/:/var/www/html/wp-content/themes/
-    env_file: .env
-    environment: 
-      - WORDPRESS_DB_HOST=database
-      - WORDPRESS_DB_USER=$MYSQL_DB_USER
-      - WORDPRESS_DB_PASSWORD=$MYSQL_DB_PASSWORD
-      - WORDPRESS_DB_NAME=$MYSQL_DB_NAME
-  nginx:                                                                                        
-    depends_on:                                                                                        
-        - wordpress                                                                                      
-    image: nginx:latest                                                                       
-    container_name: nginx                                                                          
-    restart: unless-stopped                                                                            
-    ports:                                                                                             
-        - "80:80"                                                                                        
-        - "443:443"                                                                                      
-    volumes:                                                                                           
-        - wordpress:/var/www/html
-        - ./nginx/conf/:/etc/nginx/conf.d
-        - ./nginx/conf                                         
-        # nginx will need the certificate files certbot will create                                   
-        - certbotdata:/etc/letsencrypt                                                                   
-    # networks:                                                                                          
-    #     - app-network                                                                                                                                                                                 
-  certbot:                                                                                             
-    depends_on:                                                                                        
-        - nginx                                                                                      
-    image: certbot/certbot                                                                             
-    container_name: certbot                                                                            
-    volumes:                                                                                           
-    # we save our directory of keys on our host server                                            
-    - certbotdata:/etc/letsencrypt                                                                   
-    # we bind our wordpress site to the html root                                                 
-    - wordpress:/var/www/html                                                                        
-    # this command will generate the certificate.                                                   
-    # make sure to change your -d and --email flags                                                 
-    command: certonly --webroot --webroot-path=/var/www/html --email i@jithendar.com --agree-tos --no-eff-email --force-renewal -d jithendar.com -d www.jithendar.com                                              
-                                                                                                    
-# add the certbotdata volume down here:                                                             
-volumes:                                                                                               
-  wordpress:                                                                                           
-  dbdata:                                                                                           
-  certbotdata:
+    wordpress:
+        container_name: wordpress
+        image: wordpress:php8.1-apache
+        restart: always
+        stdin_open: true
+        tty: true
+        environment:
+            WORDPRESS_DB_HOST: mariadb
+            WORDPRESS_DB_USER: db_user
+            WORDPRESS_DB_PASSWORD: db_user_pass
+            WORDPRESS_DB_NAME: db_name
+        volumes:
+            - wordpress_data:/var/www/html
+            - ./wordpress:/var/www/html
+    mariadb:
+        container_name: mariadb
+        image: mariadb
+        restart: always
+        environment:
+            MYSQL_DATABASE: db_name
+            MYSQL_USER: db_user
+            MYSQL_PASSWORD: db_user_pass
+            MYSQL_RANDOM_ROOT_PASSWORD: 'root_pass'
+        volumes:
+            - db_data:/var/lib/mysql
+    nginx:
+        container_name: nginx
+        image: nginx:latest
+        restart: unless-stopped
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./nginx/conf:/etc/nginx/conf.d
+            - ./certbot/conf:/etc/nginx/ssl
+            - ./certbot/data:/var/www/html
+    certbot:
+        container_name: certbot
+        image: certbot/certbot:latest
+        command: certonly --webroot --webroot-path=/var/www/html --email i@jithendar.com --agree-tos --no-eff-email -d jithendar.com -d www.jithendar.com
+        volumes:
+            - ./certbot/conf:/etc/letsencrypt
+            - ./certbot/logs:/var/log/letsencrypt
+            - ./certbot/data:/var/www/html
+volumes:
+    db_data:
+    wordpress_data:
