@@ -41,19 +41,19 @@ services:
         - certbotdata:/etc/letsencrypt                                                                   
     # networks:                                                                                          
     #     - app-network                                                                                                                                                                                 
-#   certbot:                                                                                             
-#     depends_on:                                                                                        
-#         - nginx                                                                                      
-#     image: certbot/certbot                                                                             
-#     container_name: certbot                                                                            
-#     volumes:                                                                                           
-#     # we save our directory of keys on our host server                                            
-#     - certbotdata:/etc/letsencrypt                                                                   
-#     # we bind our wordpress site to the html root                                                 
-#     - wordpress:/var/www/html                                                                        
-#     # this command will generate the certificate.                                                   
-#     # make sure to change your -d and --email flags                                                 
-#     command: certonly --webroot --webroot-path=/var/www/html --email i@jithendar.com --agree-tos --no-eff-email --force-renewal -d jithendar.com -d www.jithendar.com                                              
+  certbot:                                                                                             
+    depends_on:                                                                                        
+        - nginx                                                                                      
+    image: certbot/certbot                                                                             
+    container_name: certbot                                                                            
+    volumes:                                                                                           
+    # we save our directory of keys on our host server                                            
+    - certbotdata:/etc/letsencrypt                                                                   
+    # we bind our wordpress site to the html root                                                 
+    - wordpress:/var/www/html                                                                        
+    # this command will generate the certificate.                                                   
+    # make sure to change your -d and --email flags                                                 
+    command: certonly --webroot --webroot-path=/var/www/html --email i@jithendar.com --agree-tos --no-eff-email --force-renewal -d jithendar.com -d www.jithendar.com                                              
                                                                                                     
 # add the certbotdata volume down here:                                                             
 volumes:                                                                                               
