@@ -19,7 +19,7 @@ services:
     restart: always
     # Restart line controls the restart mode, meaning if the container stops running for any reason, it will restart the process immediately.
     ports:
-      - "8000:80"
+      - "80:80"
       # The previous line defines the port that the WordPress container will use. After successful installation, the full path will look like this: http://localhost:8000
     environment:
       WORDPRESS_DB_HOST: db:3306
