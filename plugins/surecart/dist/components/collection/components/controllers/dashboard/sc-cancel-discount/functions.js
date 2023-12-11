@@ -1,1 +1,0 @@
-export const replaceAmount=(e,l,a="amount")=>e.replaceAll("{{"+a+"}}",l).replaceAll("{{ "+a+" }}",l);

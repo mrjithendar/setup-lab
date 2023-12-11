@@ -1,1 +1,0 @@
-import{s as state,v,c as checkoutMachine}from"./store-b85bbb50.js";const service=v(checkoutMachine);service.subscribe((e=>state.formState=e)),service.start();const{send:send}=service,updateFormState=e=>send(e);export{updateFormState as u};

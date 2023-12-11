@@ -1,2 +1,0 @@
-import{r as s,h as t,H as r}from"./p-cc7ce8c7.js";import{s as o}from"./p-e0be99fa.js";import"./p-25433d0f.js";import"./p-d5a52441.js";import"./p-a3ae8411.js";const e=":host{display:block}p{margin-block-start:0;margin-block-end:1em}";const i=class{constructor(t){s(this,t);this.text="name"}render(){var s;if((s=o.product)===null||s===void 0?void 0:s[this.text]){return t("span",{style:{whiteSpace:"pre-line"},innerHTML:o.product[this.text]})}return t(r,null,t("slot",null))}};i.style=e;export{i as sc_product_text};
-//# sourceMappingURL=p-d5f9e6c0.entry.js.map

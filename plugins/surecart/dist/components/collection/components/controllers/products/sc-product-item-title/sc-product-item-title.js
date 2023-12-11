@@ -1,1 +1,0 @@
-import{h,Host}from"@stencil/core";export class ScProductItemTitle{render(){return h(Host,null,h("div",{class:{"product-item-title":!0}},h("slot",null)))}static get is(){return"sc-product-item-title"}static get encapsulation(){return"shadow"}static get originalStyleUrls(){return{$:["sc-product-item-title.scss"]}}static get styleUrls(){return{$:["sc-product-item-title.css"]}}}
