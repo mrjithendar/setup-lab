@@ -45,7 +45,7 @@ services:
             #   html folder to easily serve it
             - wordpress:/var/www/html
             # we need to add our own nginx-config folder
-            - nginx-conf:/etc/nginx/conf.d
+            - ./nginx-conf:/etc/nginx/conf.d
 
     certbot:
         depends_on:
