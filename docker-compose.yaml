@@ -29,18 +29,6 @@ services:
 #find /var/www/html/wp-content/themes -type d -exec chmod 755 {} \;
 #find /var/www/html/wp-content/themes -type f -exec chmod 644 {} \;
 
-    nginx:
-        container_name: nginx
-        image: nginx:latest
-        restart: unless-stopped
-        ports:
-            - 80:80
-            - 443:443
-        volumes:
-            - wordpress:/var/www/html
-            - ./nginx-conf:/etc/nginx/conf.d
-            - /etc/letsencrypt/:/etc/letsencrypt
-
 volumes:
     wordpress:
     dbdata:
