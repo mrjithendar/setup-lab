@@ -1,16 +1,5 @@
-version: '3'
+version: "3.9"
 services:
-    db:
-        image: mysql:8.0
-        container_name: db
-        restart: unless-stopped
-        command: '--default-authentication-plugin=mysql_native_password'
-        env_file: .env
-        environment:
-            - MYSQL_DATABASE=wordpress
-        volumes:
-            - dbdata:/var/lib/mysql
-
     wordpress:
         container_name: wordpress
         image: wordpress:php8.1-apache
@@ -18,17 +7,24 @@ services:
         stdin_open: true
         tty: true
         environment:
-            - WORDPRESS_DB_HOST=db:3306
-            - WORDPRESS_DB_USER=$MYSQL_USER
-            - WORDPRESS_DB_PASSWORD=$MYSQL_PASSWORD
-            - WORDPRESS_DB_NAME=wordpress
+            WORDPRESS_DB_HOST: mariadb
+            WORDPRESS_DB_USER: db_user
+            WORDPRESS_DB_PASSWORD: db_user_pass
+            WORDPRESS_DB_NAME: db_name
         volumes:
             - wordpress:/var/www/html
             - ./wordpress:/var/www/html
-
-#find /var/www/html/wp-content/themes -type d -exec chmod 755 {} \;
-#find /var/www/html/wp-content/themes -type f -exec chmod 644 {} \;
-
+    mariadb:
+        container_name: mariadb
+        image: mariadb
+        restart: always
+        environment:
+            MYSQL_DATABASE: db_name
+            MYSQL_USER: db_user
+            MYSQL_PASSWORD: db_user_pass
+            MYSQL_RANDOM_ROOT_PASSWORD: 'root_pass'
+        volumes:
+            - dbdata:/var/lib/mysql
     nginx:
         container_name: nginx
         image: nginx:latest
@@ -37,7 +33,7 @@ services:
             - 80:80
             - 443:443
         volumes:
-            - wordpress:/var/www/html
+#            - wordpress:/var/www/html
             - ./nginx-conf:/etc/nginx/conf.d
             - /etc/letsencrypt/:/etc/letsencrypt
 
