@@ -1,0 +1,1 @@
+const x=["bif","byr","clp","djf","gnf","huf","isk","jpy","kmf","krw","pyg","rwf","ugx","vnd","vuv","xaf","xag","xau","xba","xbb","xbc","xbd","xdr","xof","xpd","xpf","xpt","xts"],d=(x,d)=>f(d)?x:x/100,f=f=>{var d;return x.includes(null===(d=null==f?void 0:f.toLowerCase)||void 0===d?void 0:d.call(f))};export{f as i,d as m,x as z};

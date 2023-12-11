@@ -1,0 +1,1 @@
+import{c as a}from"./p-25433d0f.js";const{state:s,onChange:o,dispose:e}=a({id:"",method:"",manual:!1});o("id",(()=>{s.manual=(null==s?void 0:s.id)&&!["paypal","stripe","mollie","paystack"].includes(s.id)}));export{o,s};

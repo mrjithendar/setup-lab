@@ -1,0 +1,1 @@
+"use strict";const store=require("./store-68346eb0.js"),service=store.v(store.checkoutMachine);service.subscribe((e=>store.state.formState=e)),service.start();const{send:send}=service,updateFormState=e=>send(e);exports.updateFormState=updateFormState;

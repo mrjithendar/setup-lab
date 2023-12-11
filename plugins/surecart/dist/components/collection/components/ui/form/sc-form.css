@@ -1,0 +1,16 @@
+sc-form {
+  display: block;
+}
+
+:host {
+  display: block;
+}
+
+::slotted(*:not(:last-child)),
+sc-form form > *:not(:last-child) {
+  margin-bottom: var(--sc-form-row-spacing, 0.75em);
+}
+::slotted(*:not(:last-child)).wp-block-spacer,
+sc-form form > *:not(:last-child).wp-block-spacer {
+  margin-bottom: 0;
+}

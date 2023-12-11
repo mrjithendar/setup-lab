@@ -1,0 +1,1 @@
+const o=(o="",t,d="fit=scale-down,format=auto")=>{var a,n;return o.includes("surecart.com")&&(null===(a=window.scData)||void 0===a?void 0:a.cdn_root)?`${null===(n=window.scData)||void 0===n?void 0:n.cdn_root}/${d},width=${t}/${o}`:o};export{o as s};

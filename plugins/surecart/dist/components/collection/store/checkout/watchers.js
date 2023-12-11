@@ -1,0 +1,1 @@
+import state,{onChange,on}from"./store";import{getCheckout,setCheckout}from"../checkouts/mutations";onChange("checkout",(t=>setCheckout(t,state.formId))),on("get",(t=>{if("checkout"===t){const t=getCheckout(state.formId,state.mode);(null==t?void 0:t.id)&&(state.checkout=t)}}));

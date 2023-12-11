@@ -1,0 +1,1 @@
+export const productViewed=e=>{const i=new CustomEvent("scProductViewed",{detail:{id:null==e?void 0:e.id,name:null==e?void 0:e.name,permalink:null==e?void 0:e.permalink,prices:null==e?void 0:e.prices},bubbles:!0});document.dispatchEvent(i)};

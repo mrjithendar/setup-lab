@@ -1,0 +1,20 @@
+{
+	"name": "surecart/subtotal",
+	"title": "Subtotal Line Item",
+	"description": "Display a subtotal line item.",
+	"category": "surecart",
+	"ancestor": ["surecart/totals"],
+	"keywords": ["submit", "button"],
+  "textdomain": "surecart",
+	"supports": {
+		"reusable": false,
+		"html": false,
+		"order-summary": true
+	},
+	"attributes": {
+		"text": {
+			"type": "string",
+			"default": "Subtotal"
+		}
+	}
+}

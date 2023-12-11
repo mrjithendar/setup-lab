@@ -1,0 +1,19 @@
+:host {
+  display: block;
+}
+
+.subscription {
+  display: grid;
+  gap: 0.5em;
+}
+.subscription a {
+  text-decoration: none;
+  font-weight: var(--sc-font-weight-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  color: var(--sc-color-primary-500);
+}
+.subscription a.cancel {
+  color: var(--sc-color-danger-500);
+}

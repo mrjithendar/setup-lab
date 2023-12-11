@@ -1,0 +1,1 @@
+"use strict";const index=require("./index-00f0fc21.js"),utils=require("./utils-45815a15.js"),{user:user}=utils.getSerializedState(),{state:state,onChange:onChange,dispose:dispose}=index.createStore({loggedIn:!1,email:"",name:"",...user});exports.state=state;

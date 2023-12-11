@@ -1,0 +1,1 @@
+"use strict";const sizeImage=(o="",t,i="fit=scale-down,format=auto")=>{var a,e;return o.includes("surecart.com")&&(null===(a=window.scData)||void 0===a?void 0:a.cdn_root)?`${null===(e=window.scData)||void 0===e?void 0:e.cdn_root}/${i},width=${t}/${o}`:o};exports.sizeImage=sizeImage;

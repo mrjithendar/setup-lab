@@ -1,0 +1,1 @@
+import{c as s}from"./p-25433d0f.js";import{g as a}from"./p-a3ae8411.js";const{user:e}=a(),{state:o,onChange:t,dispose:m}=s({loggedIn:!1,email:"",name:"",...e});export{o as s};

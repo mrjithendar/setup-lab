@@ -1,0 +1,1 @@
+"use strict";const index=require("./index-00f0fc21.js"),store=index.createStore((()=>({cart:{open:!1}})),((t,e)=>JSON.stringify(t)!==JSON.stringify(e))),{state:state}=store,toggleCart=(t=null)=>store.set("cart",{...state.cart,open:null!==t?t:!state.cart.open});exports.store=store,exports.toggleCart=toggleCart;
