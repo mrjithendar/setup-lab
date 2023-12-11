@@ -41,7 +41,7 @@ services:
             - "80:80"
         volumes:
             - wordpress:/var/www/html
-            - ./nginx-conf-conf:/etc/nginx-conf/conf.d
+            - ./nginx-conf:/etc/nginx-conf/conf.d
             - certbot-etc:/etc/letsencrypt
         networks:
             - app-network
