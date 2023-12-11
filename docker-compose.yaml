@@ -25,17 +25,17 @@ services:
         volumes:
             - wordpress:/var/www/html
             - ./wordpress:/var/www/html
-    nginx:
-        container_name: nginx
-        image: nginx:latest
-        restart: unless-stopped
-        ports:
-            - 80:80
-            - 443:443
-        volumes:
-            - wordpress:/var/www/html
-            - ./nginx-conf:/etc/nginx/conf.d
-            - /etc/letsencrypt/:/etc/letsencrypt
+#    nginx:
+#        container_name: nginx
+#        image: nginx:latest
+#        restart: unless-stopped
+#        ports:
+#            - 80:80
+#            - 443:443
+#        volumes:
+#            - wordpress:/var/www/html
+#            - ./nginx-conf:/etc/nginx/conf.d
+#            - /etc/letsencrypt/:/etc/letsencrypt
 volumes:
     dbdata:
     wordpress:
