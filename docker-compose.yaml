@@ -46,21 +46,21 @@ services:
             - wordpress:/var/www/html
             # we need to add our own nginx-config folder
             - ./nginx-conf:/etc/nginx/conf.d
-            - certbotdata:/etc/letsencrypt
+            - /etc/letsencrypt/:/etc/letsencrypt
 
-    certbot:
-        depends_on:
-            - webserver
-        image: certbot/certbot
-        container_name: certbot
-        volumes:
-            # we save our directory of keys on our host server
-            - certbotdata:/etc/letsencrypt
-            # we bind our wordpress site to the html root
-            - wordpress:/var/www/html
-        # this command will generate the certificate.
-        # make sure to change your -d and --email flags
-        command: certonly --webroot --webroot-path=/var/www/html --email team@decodedevops.com --agree-tos --no-eff-email --force-renewal -d decodedevops.com -d www.decodedevops.com
+#    certbot:
+#        depends_on:
+#            - webserver
+#        image: certbot/certbot
+#        container_name: certbot
+#        volumes:
+#            # we save our directory of keys on our host server
+#            - certbotdata:/etc/letsencrypt
+#            # we bind our wordpress site to the html root
+#            - wordpress:/var/www/html
+#        # this command will generate the certificate.
+#        # make sure to change your -d and --email flags
+#        command: certonly --webroot --webroot-path=/var/www/html --email team@decodedevops.com --agree-tos --no-eff-email --force-renewal -d decodedevops.com -d www.decodedevops.com
 
 volumes:
     wordpress:
