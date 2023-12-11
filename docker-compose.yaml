@@ -15,7 +15,7 @@ services:
             - wordpress:/var/www/html
             - ./wordpress:/var/www/html
     db:
-        container_name: mariadb
+        container_name: mysql
         image: mysql:latest
         restart: always
         environment:
