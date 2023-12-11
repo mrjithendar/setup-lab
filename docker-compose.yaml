@@ -6,8 +6,8 @@ services:
         restart: always
         environment:
             MYSQL_ROOT_PASSWORD: MyR00tMySQLPa$$5w0rD
-            MYSQL_DATABASE: MyWordPressDatabaseName
-            MYSQL_USER: MyWordPressUser
+            MYSQL_DATABASE: decodedevops
+            MYSQL_USER: decodedevops
             MYSQL_PASSWORD: Pa$$5w0rD
         volumes:
             - dbdata:/var/lib/mysql
@@ -18,13 +18,13 @@ services:
         container_name: wp
         image: wordpress:latest
         restart: always
-        ports:
-            - "8000:80"
+#        ports:
+#            - "8000:80"
         environment:
             WORDPRESS_DB_HOST: db:3306
-            WORDPRESS_DB_USER: MyWordPressUser
+            WORDPRESS_DB_USER: decodedevops
             WORDPRESS_DB_PASSWORD: Pa$$5w0rD
-            WORDPRESS_DB_NAME: MyWordPressDatabaseName
+            WORDPRESS_DB_NAME: decodedevops
         volumes:
             - wordpress:/var/www/html
             - ./wordpress:/var/www/html
