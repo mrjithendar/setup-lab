@@ -18,7 +18,7 @@ services:
         image: wordpress:6.4.2-php8.1-apache
         restart: always
         ports:
-            -   8080:8080
+            -   8080:8081
         environment:
             WORDPRESS_DB_HOST: db:3306
             WORDPRESS_DB_USER: decodedevops
