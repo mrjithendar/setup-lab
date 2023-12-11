@@ -7,7 +7,7 @@ services:
         stdin_open: true
         tty: true
         environment:
-            WORDPRESS_DB_HOST: mariadb
+            WORDPRESS_DB_HOST: mysql
             WORDPRESS_DB_USER: db_user
             WORDPRESS_DB_PASSWORD: db_user_pass
             WORDPRESS_DB_NAME: db_name
