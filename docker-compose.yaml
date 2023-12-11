@@ -1,42 +1,74 @@
-version: "3.9"
+version: "3"
 services:
+    db:
+        container_name: db
+        image: mysql:5.7
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: MyR00tMySQLPa$$5w0rD
+            MYSQL_DATABASE: MyWordPressDatabaseName
+            MYSQL_USER: MyWordPressUser
+            MYSQL_PASSWORD: Pa$$5w0rD
+        volumes:
+            - dbdata:/var/lib/mysql
+
     wordpress:
-        container_name: wordpress
+        depends_on:
+            - db
+        container_name: wp
         image: wordpress:latest
         restart: always
-        stdin_open: true
-        tty: true
+        ports:
+            - "8000:80"
         environment:
-            WORDPRESS_DB_HOST: mysql
-            WORDPRESS_DB_USER: db_user
-            WORDPRESS_DB_PASSWORD: db_user_pass
-            WORDPRESS_DB_NAME: db_name
+            WORDPRESS_DB_HOST: db:3306
+            WORDPRESS_DB_USER: MyWordPressUser
+            WORDPRESS_DB_PASSWORD: Pa$$5w0rD
+            WORDPRESS_DB_NAME: MyWordPressDatabaseName
         volumes:
             - wordpress:/var/www/html
             - ./wordpress:/var/www/html
-    db:
-        container_name: mysql
-        image: mysql:latest
-        restart: always
-        environment:
-            MYSQL_DATABASE: db_name
-            MYSQL_USER: db_user
-            MYSQL_PASSWORD: db_user_pass
-            MYSQL_ROOT_PASSWORD: 'root_pass'
-        volumes:
-            - dbdata:/var/lib/mysql
-    nginx:
-        container_name: nginx
-        image: nginx:latest
-        restart: unless-stopped
-        ports:
-            - 80:80
-            - 443:443
-        volumes:
-            - wordpress:/var/www/html
-            - ./nginx-conf:/etc/nginx/conf.d
-            - /etc/letsencrypt/:/etc/letsencrypt
-
 volumes:
-    wordpress:
     dbdata:
+    wordpress:
+#services:
+#    wordpress:
+#        container_name: wordpress
+#        image: wordpress:latest
+#        restart: always
+#        stdin_open: true
+#        tty: true
+#        environment:
+#            WORDPRESS_DB_HOST: mysql
+#            WORDPRESS_DB_USER: db_user
+#            WORDPRESS_DB_PASSWORD: db_user_pass
+#            WORDPRESS_DB_NAME: db_name
+#        volumes:
+#            - wordpress:/var/www/html
+#            - ./wordpress:/var/www/html
+#    db:
+#        container_name: mysql
+#        image: mysql:latest
+#        restart: always
+#        environment:
+#            MYSQL_DATABASE: db_name
+#            MYSQL_USER: db_user
+#            MYSQL_PASSWORD: db_user_pass
+#            MYSQL_ROOT_PASSWORD: 'root_pass'
+#        volumes:
+#            - dbdata:/var/lib/mysql
+#    nginx:
+#        container_name: nginx
+#        image: nginx:latest
+#        restart: unless-stopped
+#        ports:
+#            - 80:80
+#            - 443:443
+#        volumes:
+#            - wordpress:/var/www/html
+#            - ./nginx-conf:/etc/nginx/conf.d
+#            - /etc/letsencrypt/:/etc/letsencrypt
+#
+#volumes:
+#    wordpress:
+#    dbdata:
