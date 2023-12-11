@@ -20,6 +20,7 @@ services:
         env_file: .env
         environment:
             - WORDPRESS_DB_HOST=db:3306
+            - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
             - WORDPRESS_DB_USER=$MYSQL_USER
             - WORDPRESS_DB_PASSWORD=$MYSQL_PASSWORD
             - WORDPRESS_DB_NAME=wordpress
