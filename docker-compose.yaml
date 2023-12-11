@@ -27,7 +27,7 @@ services:
             - ./wordpress:/var/www/html
     nginx:
         container_name: nginx
-        image: nginx:latest
+        image: nginx:latest #nginx:1.15.12-alpine
         restart: unless-stopped
         ports:
             - 80:80
