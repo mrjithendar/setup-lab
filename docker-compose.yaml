@@ -5,8 +5,6 @@ services:
         container_name: db
         restart: unless-stopped
         command: '--default-authentication-plugin=mysql_native_password'
-        # make sure to add path to env file.
-        # The MYSQL_* will automatically be passed
         env_file: .env
         environment:
             - MYSQL_DATABASE=wordpress
@@ -19,9 +17,7 @@ services:
             - db
         container_name: wordpress
         restart: unless-stopped
-        # make sure to add path to env file
         env_file: .env
-        # we refence .env variables like `$MYSQL_USER`
         environment:
             - WORDPRESS_DB_HOST=db:3306
             - WORDPRESS_DB_USER=$MYSQL_USER
@@ -41,10 +37,7 @@ services:
             - "80:80"
             - "443:443"
         volumes:
-            # we will also mount wordpress to nginx's
-            #   html folder to easily serve it
             - wordpress:/var/www/html
-            # we need to add our own nginx-config folder
             - ./nginx-conf:/etc/nginx/conf.d
             - /etc/letsencrypt/:/etc/letsencrypt
 
