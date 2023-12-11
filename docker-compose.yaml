@@ -8,24 +8,23 @@ services:
         # if you use mysql version 8 you need PHP to handle
         #   passwords correctly
         command: '--default-authentication-plugin=mysql_native_password'
-wordpress:
-    image: wordpress:5-fpm-alpine
-    # wordpress must wait for a database connection
-    depends_on:
-        - db
-
-    container_name: wordpress
-    restart: unless-stopped
-webserver:
-    # nginx needs wordpress started first
-    depends_on:
-        - wordpress
-    image: nginx:1.15.12-alpine
-    container_name: webserver
-    restart: unless-stopped
-    # open nginx's ports to access our site!!!
-    # you can of course change your ports for development,
-    #    just make sure you listen to them in nginx
-    ports:
-        - "80:80"
-        - "443:443" # for https later!
+    wordpress:
+        image: wordpress:5-fpm-alpine
+        # wordpress must wait for a database connection
+        depends_on:
+            - db
+        container_name: wordpress
+        restart: unless-stopped
+    webserver:
+        # nginx needs wordpress started first
+        depends_on:
+            - wordpress
+        image: nginx:1.15.12-alpine
+        container_name: webserver
+        restart: unless-stopped
+        # open nginx's ports to access our site!!!
+        # you can of course change your ports for development,
+        #    just make sure you listen to them in nginx
+        ports:
+            - "80:80"
+            - "443:443" # for https later!
