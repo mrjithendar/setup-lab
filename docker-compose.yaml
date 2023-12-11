@@ -26,6 +26,7 @@ services:
         volumes:
             - wordpress:/var/www/html
             - ./plugins:/var/www/html/wp-content/plugins
+            - ./themes:/var/www/html/wp-content/themes
 
     webserver:
         depends_on:
