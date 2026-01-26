@@ -13,9 +13,9 @@ services:
       - N8N_PROTOCOL=https
       - N8N_PORT=5678
 
-      - N8N_PATH=/n8n
-      - N8N_EDITOR_BASE_URL=https://jithendar.com/n8n
-      - WEBHOOK_URL=https://jithendar.com/n8n
+      - N8N_PATH=/n8n/
+      - N8N_EDITOR_BASE_URL=https://jithendar.com/n8n/
+      - WEBHOOK_URL=https://jithendar.com/n8n/
 
       - N8N_SECURE_COOKIE=true
       - N8N_RUNNERS_ENABLED=false
