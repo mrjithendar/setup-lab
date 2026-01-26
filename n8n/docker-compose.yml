@@ -19,11 +19,11 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
     networks:
-      - wordpress_default
+      - monitoring_default
 
 volumes:
   n8n_data:
 
 networks:
-  wordpress_default:
+  monitoring_default:
     external: true
