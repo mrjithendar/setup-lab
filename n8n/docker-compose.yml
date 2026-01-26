@@ -5,15 +5,15 @@ services:
     restart: always
     environment:
       - N8N_HOST=jithendar.com
-      - N8N_PORT=5678
       - N8N_PROTOCOL=https
+      - N8N_PORT=5678
 
-      - N8N_PATH=/n8n/
-      - WEBHOOK_URL=https://jithendar.com/n8n/
-
-      - N8N_EDITOR_BASE_URL=https://jithendar.com/n8n/
+      - N8N_PATH=/n8n
+      - N8N_EDITOR_BASE_URL=https://jithendar.com/n8n
+      - WEBHOOK_URL=https://jithendar.com/n8n
 
       - N8N_SECURE_COOKIE=true
+
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=admin
       - N8N_BASIC_AUTH_PASSWORD=strongpassword
@@ -23,12 +23,3 @@ services:
       - n8n_data:/home/node/.n8n
     networks:
       - monitoring_net
-
-volumes:
-  n8n_data:
-
-networks:
-  monitoring_net:
-    external: true
-    name: monitoring_default
-
