@@ -1,0 +1,84 @@
+services:
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9091:9090"
+    restart: always
+    networks:
+      - monitoring_net
+      - wordpress_net
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: always
+    networks:
+      - monitoring_net
+      - wordpress_net
+
+  node-exporter:
+    image: prom/node-exporter
+    restart: always
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - "--path.rootfs=/host"
+    networks:
+      - monitoring_net
+      - wordpress_net
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    restart: always
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring_net
+      - wordpress_net
+
+  redis-exporter:
+    image: oliver006/redis_exporter
+    environment:
+      - REDIS_ADDR=redis://wordpress-redis-1:6379
+    restart: always
+    networks:
+      - monitoring_net
+      - wordpress_net
+
+  mysql-exporter:
+    image: prom/mysqld-exporter
+    restart: always
+    volumes:
+      - ./mysql-exporter/my.cnf:/etc/mysql/my.cnf:ro
+    command:
+      - "--config.my-cnf=/etc/mysql/my.cnf"
+    ports:
+      - "9104:9104"
+    networks:
+      - wordpress_net
+      - monitoring_net
+
+volumes:
+  grafana_data:
+
+networks:
+  wordpress_net:
+    external: true
+    name: wordpress_default
+
+  monitoring_net:
+    driver: bridge
+

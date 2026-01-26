@@ -1,0 +1,80 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: wppassword
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:php8.2-fpm
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: wppassword
+      WORDPRESS_DB_NAME: wordpress
+      # Redis
+      WP_REDIS_HOST: redis
+      WP_REDIS_PORT: 6379
+      WP_REDIS_DATABASE: 0
+    volumes:
+      - wp_data:/var/www/html
+      - ./wp-config.php:/var/www/html/wp-config.php
+      - ./php/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini
+      - ./php/php-fpm.conf:/usr/local/etc/php-fpm.d/php-fpm.conf
+      - ./php/php.ini:/usr/local/etc/php/conf.d/custom-php.ini
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - wp_data:/var/www/html
+      - ./nginx:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - wordpress
+    networks:
+      - wordpress_net
+      - monitoring_net
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+
+  wpcli:
+    image: wordpress:cli
+    depends_on:
+      - wordpress
+    volumes:
+      - wp_data:/var/www/html
+
+  certbot:
+    image: certbot/dns-cloudflare
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+
+volumes:
+  db_data:
+  wp_data:
+  redis_data:
+
+networks:
+  wordpress_net:
+    external: true
+    name: wordpress_default
+
+  monitoring_net:
+    external: true
+    name: monitoring_default
+
