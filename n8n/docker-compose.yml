@@ -5,34 +5,21 @@ services:
     image: n8nio/n8n:latest
     container_name: n8n
     restart: always
-
     environment:
       N8N_HOST: jithendar.com
-      N8N_PORT: 5678
       N8N_PROTOCOL: https
-      N8N_RUNNERS_ENABLED: "false"
-
+      N8N_PORT: 5678
+      # SUBPATH (ALL THREE REQUIRED)
       N8N_PATH: /n8n
+      N8N_BASE_PATH: /n8n
       N8N_EDITOR_BASE_URL: https://jithendar.com/n8n
       WEBHOOK_URL: https://jithendar.com/n8n
-
       N8N_SECURE_COOKIE: "true"
-
-      # 🔐 MUST NEVER CHANGE
-      # N8N_ENCRYPTION_KEY: REPLACE_WITH_LONG_RANDOM_STRING
-
-      N8N_BASIC_AUTH_ACTIVE: "true"
-      N8N_BASIC_AUTH_USER: admin
-      N8N_BASIC_AUTH_PASSWORD: strongpassword
-
       TZ: Asia/Kolkata
-
     volumes:
       - n8n_data:/home/node/.n8n
-
     expose:
       - "5678"
-
     networks:
       - monitoring_net
 
