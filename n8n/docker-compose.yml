@@ -2,10 +2,9 @@ version: "3.9"
 
 services:
   n8n:
-    image: n8nio/n8n:2.4.6
-    restart: unless-stopped
+    image: n8nio/n8n
     container_name: n8n
-
+    restart: unless-stopped
     environment:
       - N8N_HOST=jithendar.com
       - N8N_PROTOCOL=https
@@ -15,15 +14,16 @@ services:
       - WEBHOOK_URL=https://jithendar.com/n8n
       - N8N_SECURE_COOKIE=true
       - NODE_ENV=production
-      - GENERIC_TIMEZONE=Asia/Kolkata
+
     volumes:
       - n8n_data:/home/node/.n8n
+
     networks:
-      - monitoring_default
+      - wordpress_default
 
 volumes:
   n8n_data:
 
 networks:
-  monitoring_default:
+  wordpress_default:
     external: true
