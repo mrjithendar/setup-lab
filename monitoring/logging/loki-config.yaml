@@ -1,10 +1,19 @@
 auth_enabled: false
 
+target: all
+
 server:
   http_listen_port: 3100
   grpc_listen_port: 9096
   log_level: debug
   grpc_server_max_concurrent_streams: 1000
+
+ingester:
+  lifecycler:
+    ring:
+      replication_factor: 1
+  chunk_idle_period: 1h
+  chunk_retain_period: 30s
 
 common:
   instance_addr: 127.0.0.1
@@ -33,7 +42,7 @@ limits_config:
 
 schema_config:
   configs:
-    - from: 2020-10-24
+    - from: 2024-01-01
       store: tsdb
       object_store: filesystem
       schema: v13
