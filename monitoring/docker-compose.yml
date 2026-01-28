@@ -50,8 +50,8 @@ services:
       - /:/host/root:ro
     ports:
       - "12345:12345"
-      - "4317:4317"
-      - "4318:4318"
+      - "4317:4317"   # OTLP gRPC ingress
+      - "4318:4318"   # OTLP HTTP ingress
     networks:
       - monitoring_net
       - wordpress_net
@@ -84,12 +84,11 @@ services:
       - ./logging/tempo.yaml:/etc/tempo/tempo.yaml:ro
       - tempo_data:/var/tempo
     ports:
-      - "3200:3200"
-      - "4317:4317"
-      - "4318:4318"
+      - "3200:3200"   # Tempo UI / query only
     networks:
       - monitoring_net
       - wordpress_net
+
 
   vulture:
     image: grafana/tempo-vulture:latest
