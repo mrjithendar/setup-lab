@@ -1,6 +1,7 @@
 services:
   db:
     image: mysql:8.0
+    container_name: mysql-database
     restart: always
     environment:
       MYSQL_DATABASE: wordpress
@@ -12,6 +13,7 @@ services:
 
   wordpress:
     image: wordpress:php8.2-fpm
+    container_name: wordpress-app
     restart: always
     environment:
       WORDPRESS_DB_HOST: db:3306
@@ -31,6 +33,7 @@ services:
 
   nginx:
     image: nginx:alpine
+    container_name: nginx-server
     restart: always
     ports:
       - "80:80"
@@ -47,6 +50,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: redis-cache
     restart: always
     command: redis-server --save 60 1 --loglevel warning
     volumes:
@@ -54,6 +58,8 @@ services:
 
   wpcli:
     image: wordpress:cli
+    container_name: wp-cli
+    tty: true
     depends_on:
       - wordpress
     volumes:
@@ -61,6 +67,7 @@ services:
 
   certbot:
     image: certbot/dns-cloudflare
+    container_name: certbot-cloudflare
     volumes:
       - ./certbot/conf:/etc/letsencrypt
 

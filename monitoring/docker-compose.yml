@@ -1,6 +1,7 @@
 services:
   prometheus:
     image: prom/prometheus
+    container_name: prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--web.external-url=https://jithendar.com/prometheus/"
@@ -17,6 +18,7 @@ services:
 
   grafana:
     image: grafana/grafana
+    container_name: grafana
     ports:
       - "3000:3000"
     volumes:
@@ -28,6 +30,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter
+    container_name: node-exporter
     restart: always
     pid: host
     volumes:
@@ -40,6 +43,7 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor
+    container_name: cadvisor
     restart: always
     volumes:
       - /:/rootfs:ro
@@ -54,6 +58,7 @@ services:
 
   redis-exporter:
     image: oliver006/redis_exporter
+    container_name: redis-exporter
     environment:
       - REDIS_ADDR=redis://wordpress-redis-1:6379
     restart: always
@@ -63,6 +68,7 @@ services:
 
   mysql-exporter:
     image: prom/mysqld-exporter
+    container_name: mysql-exporter
     restart: always
     volumes:
       - ./mysql-exporter/my.cnf:/etc/mysql/my.cnf:ro
