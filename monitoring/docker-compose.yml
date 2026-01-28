@@ -1,37 +1,43 @@
+version: "3.9"
+
 services:
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     container_name: prometheus
+    restart: unless-stopped
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--web.external-url=https://jithendar.com/prometheus/"
-      - "--web.route-prefix=/prometheus/"
-    ports:
-      - "9091:9090"
-    restart: always
+      - "--web.external-url=https://jithendar.com/prometheus"
+      - "--web.route-prefix=/prometheus"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
+    expose:
+      - "9090"
     networks:
       - monitoring_net
       - wordpress_net
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:latest
     container_name: grafana
-    ports:
-      - "3000:3000"
+    restart: unless-stopped
+
+    environment:
+      - GF_SERVER_ROOT_URL=https://jithendar.com/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - grafana_data:/var/lib/grafana
-    restart: always
+    expose:
+      - "3000"
     networks:
       - monitoring_net
       - wordpress_net
 
   node-exporter:
-    image: prom/node-exporter
+    image: prom/node-exporter:latest
     container_name: node-exporter
-    restart: always
+    restart: unless-stopped
     pid: host
     volumes:
       - /:/host:ro,rslave
@@ -39,48 +45,47 @@ services:
       - "--path.rootfs=/host"
     networks:
       - monitoring_net
-      - wordpress_net
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor
+    image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    restart: always
+    restart: unless-stopped
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     networks:
       - monitoring_net
-      - wordpress_net
 
   redis-exporter:
-    image: oliver006/redis_exporter
+    image: oliver006/redis_exporter:latest
     container_name: redis-exporter
+    restart: unless-stopped
     environment:
-      - REDIS_ADDR=redis://wordpress-redis-1:6379
-    restart: always
+      - REDIS_ADDR=redis://redis:6379
     networks:
       - monitoring_net
       - wordpress_net
 
   mysql-exporter:
-    image: prom/mysqld-exporter
+    image: prom/mysqld-exporter:latest
     container_name: mysql-exporter
-    restart: always
+    restart: unless-stopped
+
     volumes:
       - ./mysql-exporter/my.cnf:/etc/mysql/my.cnf:ro
     command:
       - "--config.my-cnf=/etc/mysql/my.cnf"
-    ports:
-      - "9104:9104"
+    expose:
+      - "9104"
     networks:
-      - wordpress_net
       - monitoring_net
-
+      - wordpress_net
 volumes:
+  prometheus_data:
   grafana_data:
 
 networks:
@@ -90,4 +95,3 @@ networks:
 
   monitoring_net:
     driver: bridge
-
