@@ -48,6 +48,8 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/host/root:ro
+    ports:
+      - "12345:12345"
     networks:
       - monitoring_net
       - wordpress_net
