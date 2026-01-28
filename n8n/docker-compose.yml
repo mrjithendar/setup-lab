@@ -6,6 +6,8 @@ services:
     container_name: n8n
     restart: unless-stopped
     environment:
+      - N8N_METRICS=true                     # This enables the /metrics endpoint
+      - N8N_METRICS_INCLUDE_DEFAULT_METRICS=true # Includes Node.js/system metrics
       - NODE_ENV=production
       - N8N_HOST=jithendar.com
       - N8N_PROTOCOL=https
