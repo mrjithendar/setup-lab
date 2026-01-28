@@ -121,7 +121,7 @@ services:
     environment:
       - CONFIG_FILEPATH=/etc/redpanda/redpanda-console-config.yaml
     volumes:
-      - ./redpanda-console.yaml:/etc/redpanda/redpanda-console-config.yaml
+      - ./logging/redpanda-console.yaml:/etc/redpanda/redpanda-console-config.yaml
     ports:
       - "8080:8080"
     depends_on:
