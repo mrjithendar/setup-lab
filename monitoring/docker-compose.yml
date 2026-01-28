@@ -39,7 +39,9 @@ services:
     restart: unless-stopped
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
+    command: 
+      - config.file=/etc/loki/local-config.yaml
+      - "-log.level=debug"
     volumes:
       - ./logging/loki-config.yaml:/etc/loki/local-config.yaml
     networks:
@@ -112,6 +114,7 @@ services:
 volumes:
   prometheus_data:
   grafana_data:
+  loki_data:
 
 networks:
   wordpress_net:
