@@ -53,6 +53,7 @@ services:
       - /:/host/root:ro
     ports:
       - "12345:12345"
+      - "4319:4317"
     networks:
       - monitoring_net
       - wordpress_net
