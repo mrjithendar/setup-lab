@@ -71,10 +71,11 @@ loki.write "local_loki" {
 prometheus.scrape "alloy_self" {
   targets = [
     {
-      __address__ = "alloy:12345"
+      __address__ = "alloy:12345",
+      job         = "alloy",
+      instance    = constants.hostname
     }
   ]
-
   scrape_interval = "15s"
-  forward_to      = [prometheus.remote_write.local_prometheus.receiver]
+  forward_to = [prometheus.remote_write.local_prometheus.receiver]
 }
