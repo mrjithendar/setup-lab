@@ -44,6 +44,7 @@ services:
       - "-log.level=debug"
     volumes:
       - ./logging/loki-config.yaml:/etc/loki/local-config.yaml
+      - loki_data:/loki
     networks:
       - monitoring_net
       - wordpress_net
