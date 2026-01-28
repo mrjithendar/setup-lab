@@ -5,62 +5,12 @@ logging {
   format = "logfmt"
 }
 
-// ------------------------------------
-// Metrics collection for Docker containers
-// ------------------------------------
-prometheus.exporter.cadvisor "docker_metrics" {
-  docker_only = true
-  // Mount the Docker socket as read-only in the Docker compose file to make this work
-}
-
-discovery.relabel "docker_metrics" {
-  targets = prometheus.exporter.cadvisor.docker_metrics.targets
-
-  rule {
-    target_label = "job"
-    replacement  = "integrations/docker"
-  }
-  rule {
-    target_label = "instance"
-    replacement  = constants.hostname
-  }
-}
-
-prometheus.scrape "docker_metrics" {
-  targets        = discovery.relabel.docker_metrics.output
-  forward_to     = [prometheus.remote_write.local_prometheus.receiver]
-  scrape_interval = "15s"
-}
-
-prometheus.remote_write "local_prometheus" {
-  endpoint {
-    url = "http://prometheus:9090/api/v1/write" // Use the service name defined in docker-compose
-  }
-}
-
-// ------------------------------------
-// Logs collection for Docker containers
-// ------------------------------------
-discovery.docker "containers" {
-  host = "unix:///var/run/docker.sock"
-}
-
-discovery.relabel "containers" {
-  targets = discovery.docker.containers.targets
-  rule {
-    target_label = "__service_name__"
-    replacement  = "${__meta_docker_container_name}"
-  }
-}
-
-loki.source.docker "containers" {
-  targets    = discovery.relabel.containers.output
-  forward_to = [loki.write.local_loki.receiver]
-  host = "unix:///var/run/docker.sock"
-}
-
-loki.write "local_loki" {
-  endpoint {
-    url = "http://loki:3100/loki/api/v1/push" // Use the service name defined in docker-compose
-  }
+prometheus.scrape "alloy_self" {
+  targets = [
+    {
+      __address__ = "alloy:12345",
+      job         = "alloy",
+      instance    = constants.hostname,
+    },
+  ]
 }
