@@ -11,8 +11,20 @@ distributor:
         http:
 
 ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
   trace_idle_period: 10s
   max_block_duration: 5m
+
+querier:
+  frontend_worker:
+    frontend_address: 127.0.0.1:9095
+
+query_frontend:
+  address: 127.0.0.1:9095
 
 storage:
   trace:
@@ -21,4 +33,3 @@ storage:
       path: /var/tempo/traces
     wal:
       path: /var/tempo/wal
-
