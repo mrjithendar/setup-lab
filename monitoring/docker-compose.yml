@@ -136,6 +136,7 @@ services:
 
   redpanda:
     image: redpandadata/redpanda:latest
+    container_name: redpanda
     ports:
       - "9092:9092" # Kafka API for clients
     command: >
@@ -146,6 +147,7 @@ services:
 
   redpanda-console:
     image: docker.redpanda.com/redpandadata/console
+    container_name: redpanda-console
     environment:
       - CONFIG_FILEPATH=/etc/redpanda/redpanda-console-config.yaml
     volumes:
