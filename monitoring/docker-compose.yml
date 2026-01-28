@@ -33,6 +33,25 @@ services:
       - monitoring_net
       - wordpress_net
 
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro
+    ports:
+      - "12345:12345"   # Alloy UI (optional)
+    networks:
+      - monitoring_net
+      - wordpress_net
+
   loki:
     image: grafana/loki
     container_name: loki
