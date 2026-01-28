@@ -74,18 +74,21 @@ services:
       - monitoring_net
       - wordpress_net
 
-  # promtail:
-  #   image: grafana/promtail
-  #   container_name: promtail
-  #   restart: unless-stopped
-  #   volumes:
-  #     - /var/lib/docker/containers:/var/lib/docker/containers:ro
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - ./logging/promtail-config.yaml:/etc/promtail/config.yml
-  #   command: -config.file=/etc/promtail/config.yml
-  #   networks:
-  #     - monitoring_net
-  #     - wordpress_net
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./logging/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/tmp/tempo
+    ports:
+      - "3200:3200"     # Tempo UI / API
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    networks:
+      - monitoring_net
+      - wordpress_net
+
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -141,6 +144,7 @@ volumes:
   prometheus_data:
   grafana_data:
   loki_data:
+  tempo_data:
 
 networks:
   wordpress_net:
