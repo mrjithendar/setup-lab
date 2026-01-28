@@ -142,6 +142,9 @@ volumes:
   tempo_data:
 
 networks:
-  monitoring:
+  monitoring-net:
     driver: bridge
     name: monitoring_net
+  wordpress-net:
+    driver: bridge
+    name: wordpress_net
