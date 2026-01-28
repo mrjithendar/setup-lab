@@ -144,6 +144,9 @@ services:
       --mode=dev-container
       --kafka-addr=PLAINTEXT://0.0.0.0:9092
       --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+    networks:
+      - monitoring_net
+      - wordpress_net
 
   redpanda-console:
     image: docker.redpanda.com/redpandadata/console
@@ -156,7 +159,10 @@ services:
       - "8081:8080"
     depends_on:
       - redpanda
-
+    networks:
+      - monitoring_net
+      - wordpress_net
+      
 volumes:
   prometheus_data:
   grafana_data:
