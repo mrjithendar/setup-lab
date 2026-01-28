@@ -1,13 +1,14 @@
 services:
   prometheus:
     image: prom/prometheus
-    volumes:
-      - ./prometheus:/etc/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
       - "9091:9090"
     restart: always
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
     networks:
       - monitoring_net
       - wordpress_net

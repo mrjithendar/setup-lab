@@ -18,3 +18,11 @@ scrape_configs:
     static_configs:
       - targets: ["mysql-exporter:9104"]
 
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9091"]
+  
+  - job_name: n8n
+    static_configs:
+      - targets: ["n8n:5678"]
+
