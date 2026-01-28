@@ -93,6 +93,7 @@ services:
 
   vulture:
     image: grafana/tempo-vulture:latest
+    container_name: vulture
     restart: always
     command:
       [
