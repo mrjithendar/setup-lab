@@ -1,10 +1,13 @@
-auth_enabled: false
+partition_ring_live_store: true
+stream_over_http_enabled: true
 
 server:
   http_listen_port: 3200
-  log_level: debug
+  log_level: info
 
 distributor:
+  ingester_write_path_enabled: false
+  kafka_write_path_enabled: true
   receivers:
     otlp:
       protocols:
@@ -12,6 +15,10 @@ distributor:
           endpoint: "tempo:4317"
         http:
           endpoint: "tempo:4318"
+  #log_received_spans:
+  #    enabled: true
+  #  log_discarded_spans:
+  #    enabled: true
 
 backend_scheduler:
   provider:
@@ -46,6 +53,14 @@ query_frontend:
   mcp_server:
     enabled: true
 
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal
+
 overrides:
   defaults:
     metrics_generator:
@@ -54,17 +69,12 @@ overrides:
 
 ingest:
   enabled: true
+  kafka:
+    address: redpanda:9092
+    topic: tempo-ingest
 
 block_builder:
   consume_cycle_duration: 30s
 
 usage_report:
   reporting_enabled: false
-
-storage:
-  trace:
-    backend: local
-    local:
-      path: /var/tempo/traces
-    wal:
-      path: /var/tempo/wal
