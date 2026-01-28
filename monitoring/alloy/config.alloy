@@ -7,24 +7,28 @@ server {
   http_listen_port    = 12345
 }
 
+// DOCKER LOG DISCOVERY
 discovery.docker "containers" {}
 
 loki.source.docker "docker_logs" {
-  host       = "unix:///var/run/docker.sock"
-  targets    = discovery.docker.containers.targets
-  forward_to = [loki.write.default.receiver]
+  host    = "unix:///var/run/docker.sock"
+  targets = discovery.docker.containers.targets
 
   labels = {
-    job = "docker"
+    job = "docker",
   }
+
+  forward_to = [loki.write.default.receiver]
 }
 
+// SEND LOGS TO LOKI
 loki.write "default" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
 
+// HOST METRICS
 prometheus.exporter.unix "node" {
   rootfs_path = "/host/root"
   procfs_path = "/host/proc"
@@ -36,6 +40,7 @@ prometheus.scrape "node" {
   forward_to = [prometheus.remote_write.default.receiver]
 }
 
+// SEND METRICS TO PROMETHEUS
 prometheus.remote_write "default" {
   endpoint {
     url = "http://prometheus:9090/api/v1/write"
