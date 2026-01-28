@@ -7,16 +7,14 @@ services:
     restart: unless-stopped
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--web.external-url=https://jithendar.com/prometheus/"
-      - "--web.route-prefix=/prometheus/"
       - "--web.enable-remote-write-receiver"
-      - --enable-feature=exemplar-storage
-      - --enable-feature=native-histograms
+      - "--enable-feature=exemplar-storage"
+      - "--enable-feature=native-histograms"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
-    expose:
-      - "9090"
+    ports:
+      - "9090:9090"
     networks:
       - monitoring_net
       - wordpress_net
@@ -26,12 +24,12 @@ services:
     container_name: grafana
     restart: unless-stopped
     environment:
-      - GF_SERVER_ROOT_URL=https://jithendar.com/grafana/
-      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      GF_SERVER_ROOT_URL: https://jithendar.com/grafana/
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
     volumes:
       - grafana_data:/var/lib/grafana
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     networks:
       - monitoring_net
       - wordpress_net
@@ -40,11 +38,10 @@ services:
     image: grafana/alloy:latest
     container_name: alloy
     restart: unless-stopped
-    command: [
-      "run",
-      "--server.http.listen-addr=0.0.0.0:12345",
-      "/etc/alloy/config.alloy"
-    ]
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock
@@ -53,26 +50,27 @@ services:
       - /:/host/root:ro
     ports:
       - "12345:12345"
-      - "4319:4317"
+      - "4317:4317"
+      - "4318:4318"
     networks:
       - monitoring_net
       - wordpress_net
 
   loki:
-    image: grafana/loki
+    image: grafana/loki:latest
     container_name: loki
     restart: unless-stopped
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./logging/loki-config.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
     ports:
       - "3100:3100"
-    command: "-config.file=/etc/loki/config.yaml"
     healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3100/ready || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      - ./logging/loki-config.yaml:/etc/loki/config.yaml
-      - loki_data:/loki
     networks:
       - monitoring_net
       - wordpress_net
@@ -80,16 +78,15 @@ services:
   tempo:
     image: grafana/tempo:latest
     container_name: tempo
-    command: ["-config.file=/etc/tempo/tempo.yaml"]
-    environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+    restart: unless-stopped
+    command: -config.file=/etc/tempo/tempo.yaml
     volumes:
       - ./logging/tempo.yaml:/etc/tempo/tempo.yaml:ro
-      - tempo_data:/tmp/tempo
+      - tempo_data:/var/tempo
     ports:
-      - "3200:3200"     # Tempo UI / API
-      - "4317:4317"     # OTLP gRPC
-      - "4318:4318"     # OTLP HTTP
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
     networks:
       - monitoring_net
       - wordpress_net
@@ -99,46 +96,14 @@ services:
     container_name: vulture
     restart: always
     command:
-      [
-        "-prometheus-listen-address=:8080",
-        "-tempo-query-url=http://tempo:3200",
-        "-tempo-push-url=http://tempo:4317",
-      ]
+      - -prometheus-listen-address=:8080
+      - -tempo-query-url=http://tempo:3200
+      - -tempo-push-url=http://tempo:4317
     depends_on:
       - tempo
-
-  redpanda:
-    image: redpandadata/redpanda
-    container_name: redpanda
-    ports:
-      - "9092:9092" # Kafka API for clients
-    command: >
-      redpanda start --overprovisioned
-      --mode=dev-container
-      --kafka-addr=PLAINTEXT://0.0.0.0:9092
-      --advertise-kafka-addr=PLAINTEXT://redpanda:9092
-
-  redpanda-console:
-    image: docker.redpanda.com/redpandadata/console
-    container_name: redpanda-console
-    environment:
-      - CONFIG_FILEPATH=/etc/redpanda/redpanda-console-config.yaml
-    volumes:
-      - ./logging/redpanda-console.yaml:/etc/redpanda/redpanda-console-config.yaml
-    ports:
-      - "8080:8080"
-    depends_on:
-      - redpanda
-
-  k6-tracing:
-    image: ghcr.io/grafana/xk6-client-tracing
-    container_name: k6-tracing
-    environment:
-      - ENDPOINT=alloy:4317
-    restart: always
-    depends_on:
-      - tempo
-      - alloy
+    networks:
+      - monitoring_net
+      - wordpress_net
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -148,9 +113,12 @@ services:
     volumes:
       - /:/host:ro,rslave
     command:
-      - "--path.rootfs=/host"
+      - --path.rootfs=/host
+    ports:
+      - "9100:9100"
     networks:
       - monitoring_net
+      - wordpress_net
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -161,35 +129,12 @@ services:
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
-    expose:
-      - "8080"
-    networks:
-      - monitoring_net
-
-  redis-exporter:
-    image: oliver006/redis_exporter:latest
-    container_name: redis-exporter
-    restart: unless-stopped
-    environment:
-      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "8080:8080"
     networks:
       - monitoring_net
       - wordpress_net
 
-  mysql-exporter:
-    image: prom/mysqld-exporter:latest
-    container_name: mysql-exporter
-    restart: unless-stopped
-
-    volumes:
-      - ./mysql-exporter/my.cnf:/etc/mysql/my.cnf:ro
-    command:
-      - "--config.my-cnf=/etc/mysql/my.cnf"
-    expose:
-      - "9104"
-    networks:
-      - monitoring_net
-      - wordpress_net
 volumes:
   prometheus_data:
   grafana_data:
@@ -197,9 +142,6 @@ volumes:
   tempo_data:
 
 networks:
-  wordpress_net:
-    external: true
-    name: wordpress_default
-
-  monitoring_net:
+  monitoring:
     driver: bridge
+    name: monitoring_net
