@@ -3,20 +3,14 @@ logging {
   format = "logfmt"
 }
 
-//
-// ==========================
 // Remote write → Prometheus
-// ==========================
 prometheus.remote_write "local_prometheus" {
   endpoint {
     url = "http://prometheus:9090/api/v1/write"
   }
 }
 
-//
-// ==========================
 // Alloy self-metrics
-// ==========================
 prometheus.scrape "alloy_self" {
   targets = [
     {
@@ -30,10 +24,7 @@ prometheus.scrape "alloy_self" {
   forward_to      = [prometheus.remote_write.local_prometheus.receiver]
 }
 
-//
-// ==========================
 // Docker / cAdvisor metrics
-// ==========================
 prometheus.exporter.cadvisor "docker" {
   docker_only = true
 }
@@ -56,16 +47,4 @@ prometheus.scrape "docker" {
   targets         = discovery.relabel.docker.output
   scrape_interval = "15s"
   forward_to      = [prometheus.remote_write.local_prometheus.receiver]
-}
-
-// ==========================
-// MySQL metrics
-// ==========================
-prometheus.exporter.mysql "mysql" {
-  data_source_name = "exporter:password@(mysql:3306)/"
-}
-
-prometheus.scrape "mysql" {
-  targets    = prometheus.exporter.mysql.mysql.targets
-  forward_to = [prometheus.remote_write.local_prometheus.receiver]
 }
