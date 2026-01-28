@@ -58,20 +58,6 @@ prometheus.scrape "docker" {
   forward_to      = [prometheus.remote_write.local_prometheus.receiver]
 }
 
-//
-// ==========================
-// Redis metrics
-// ==========================
-prometheus.exporter.redis "redis" {
-  address = "redis:6379"
-}
-
-prometheus.scrape "redis" {
-  targets = prometheus.exporter.redis.redis.targets
-  forward_to = [prometheus.remote_write.local_prometheus.receiver]
-}
-
-//
 // ==========================
 // MySQL metrics
 // ==========================
