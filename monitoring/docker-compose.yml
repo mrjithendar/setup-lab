@@ -104,6 +104,36 @@ services:
     depends_on:
       - tempo
 
+  redpanda:
+    image: redpandadata/redpanda
+    ports:
+      - "9092:9092" # Kafka API for clients
+    command: >
+      redpanda start --overprovisioned
+      --mode=dev-container
+      --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console
+    environment:
+      - CONFIG_FILEPATH=/etc/redpanda/redpanda-console-config.yaml
+    volumes:
+      - ./redpanda-console.yaml:/etc/redpanda/redpanda-console-config.yaml
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redpanda
+
+  k6-tracing:
+    image: ghcr.io/grafana/xk6-client-tracing
+    environment:
+      - ENDPOINT=alloy:4317
+    restart: always
+    depends_on:
+      - tempo
+      - alloy
+
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
