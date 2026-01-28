@@ -89,6 +89,17 @@ services:
       - monitoring_net
       - wordpress_net
 
+  vulture:
+    image: grafana/tempo-vulture:latest
+    restart: always
+    command:
+      [
+        "-prometheus-listen-address=:8080",
+        "-tempo-query-url=http://tempo:3200",
+        "-tempo-push-url=http://tempo:4317",
+      ]
+    depends_on:
+      - tempo
 
   node-exporter:
     image: prom/node-exporter:latest
