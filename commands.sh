@@ -1,2 +1,3 @@
 docker network connect monitoring_monitoring_net nginx-server
 docker restart nginx-server
+docker network connect monitoring_monitoring_net n8n
