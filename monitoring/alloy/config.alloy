@@ -1,5 +1,5 @@
 // ------------------------------------
-// Docker discovery (MUST come first)
+// Docker discovery
 // ------------------------------------
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
@@ -11,24 +11,40 @@ discovery.docker "containers" {
 discovery.relabel "containers" {
   targets = discovery.docker.containers.targets
 
+  // Container name (remove leading "/")
   rule {
-    target_label = "container"
-    replacement  = "${__meta_docker_container_name}"
+    action        = "replace"
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+    replacement   = "$1"
   }
 
+  // Docker Compose service
   rule {
-    target_label = "service"
-    replacement  = "${__meta_docker_container_label_com_docker_compose_service}"
+    action        = "replace"
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
   }
 
+  // Docker Compose project
   rule {
-    target_label = "project"
-    replacement  = "${__meta_docker_container_label_com_docker_compose_project}"
+    action        = "replace"
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "project"
   }
 
+  // Hostname
   rule {
-    target_label = "host"
-    replacement  = constants.hostname
+    action        = "replace"
+    target_label  = "host"
+    replacement   = constants.hostname
+  }
+
+  // Drop noisy internal labels
+  rule {
+    action = "labeldrop"
+    regex  = "__meta_docker_.*"
   }
 }
 
