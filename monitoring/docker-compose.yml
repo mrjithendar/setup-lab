@@ -10,6 +10,8 @@ services:
       - "--web.external-url=https://jithendar.com/prometheus/"
       - "--web.route-prefix=/prometheus/"
       - "--web.enable-remote-write-receiver"
+      - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
