@@ -40,7 +40,6 @@ services:
     command: [
       "run",
       "--server.http.listen-addr=0.0.0.0:12345",
-      "--server.http.root-path=/alloy",
       "/etc/alloy/config.alloy"
     ]
     volumes:
@@ -50,7 +49,7 @@ services:
       - /sys:/host/sys:ro
       - /:/host/root:ro
     ports:
-      - "12345:12345"   # Alloy UI (optional)
+      - "12345:12345"
     networks:
       - monitoring_net
       - wordpress_net
