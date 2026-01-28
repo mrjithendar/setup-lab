@@ -19,13 +19,6 @@ ingester:
   trace_idle_period: 10s
   max_block_duration: 5m
 
-querier:
-  frontend_worker:
-    frontend_address: 127.0.0.1:9095
-
-query_frontend:
-  address: 127.0.0.1:9095
-
 storage:
   trace:
     backend: local
