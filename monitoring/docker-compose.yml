@@ -78,6 +78,8 @@ services:
     image: grafana/tempo:latest
     container_name: tempo
     command: ["-config.file=/etc/tempo/tempo.yaml"]
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
     volumes:
       - ./logging/tempo.yaml:/etc/tempo/tempo.yaml:ro
       - tempo_data:/tmp/tempo
