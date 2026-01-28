@@ -9,6 +9,7 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--web.external-url=https://jithendar.com/prometheus/"
       - "--web.route-prefix=/prometheus/"
+      - "--web.enable-remote-write-receiver"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
