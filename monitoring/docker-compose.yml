@@ -40,6 +40,7 @@ services:
     command: [
       "run",
       "--server.http.listen-addr=0.0.0.0:12345",
+      "--server.http.root-path=/alloy",
       "/etc/alloy/config.alloy"
     ]
     volumes:
