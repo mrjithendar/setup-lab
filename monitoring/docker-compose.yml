@@ -40,10 +40,10 @@ services:
     ports:
       - "3100:3100"
     command: 
-      - config.file=/etc/loki/local-config.yaml
+      - config.file=/etc/loki/loki-config.yaml
       - "-log.level=debug"
     volumes:
-      - ./logging/loki-config.yaml:/etc/loki/local-config.yaml
+      - ./logging/loki-config.yaml:/etc/loki/loki-config.yaml
       - loki_data:/loki
     networks:
       - monitoring_net
