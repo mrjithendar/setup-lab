@@ -1,11 +1,5 @@
 // config.alloy
 
-http {
-  listen_address = "0.0.0.0"
-  //listen_port    = 12345
-  //path_prefix    = "/alloy"
-}
-
 logging {
   level  = "info"
   format = "logfmt"
