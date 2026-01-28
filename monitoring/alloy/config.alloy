@@ -1,9 +1,9 @@
 // config.alloy
 
 http {
-  http_listen_address = "0.0.0.0"
-  http_listen_port    = 12345
-  // http_path_prefix    = "/alloy"
+  listen_address = "0.0.0.0"
+  listen_port    = 12345
+  path_prefix    = "/alloy"
 }
 
 logging {
