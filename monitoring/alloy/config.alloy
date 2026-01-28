@@ -1,10 +1,6 @@
 logging {
-  level = "info"
-}
-
-server {
-  http_listen_address = "0.0.0.0"
-  http_listen_port    = 12345
+  level  = "info"
+  format = "logfmt"
 }
 
 // DOCKER LOG DISCOVERY
