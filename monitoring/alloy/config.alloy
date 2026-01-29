@@ -77,3 +77,39 @@ loki.write "loki_server" {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
+
+// 3. TRACES SECTION (OTLP -> Tempo)
+// 1. Accept traces from your applications
+otelcol.receiver.otlp "otlp_receiver" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.to_prometheus.input]
+    logs    = [otelcol.exporter.loki.to_loki.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// 2. Export traces to Tempo
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317" // Adjust to your Tempo address
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// 3. Bonus: Convert OTLP metrics/logs to our existing pipelines
+otelcol.exporter.prometheus "to_prometheus" {
+  forward_to = [prometheus.remote_write.prom_server.receiver]
+}
+
+otelcol.exporter.loki "to_loki" {
+  forward_to = [loki.write.loki_server.receiver]
+}
