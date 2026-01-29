@@ -88,6 +88,7 @@ services:
     ports:
       - "3200:3200"   # Tempo UI / query only
       - "4317:4317"   # OTLP gRPC (For Alloy to push traces)
+      - "7946:7946" # Gossip port
     networks:
       - monitoring_net
       - wordpress_net
