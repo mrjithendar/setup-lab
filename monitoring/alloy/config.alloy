@@ -4,7 +4,7 @@ logging {
 }
 
 // prometheus writer configuration
-prometheus.write "prometheus" {
+prometheus.remote_write "prometheus" {
   endpoint {
     url = "http://prometheus:9090/prometheus/api/v1/write"
   }
@@ -31,7 +31,7 @@ loki.source.docker "docker_logs" {
 // scrape metrics and send to prometheus
 prometheus.scrape "metrics_collector" {
   targets = discovery.docker.docker_containers.targets
-  forward_to = [prometheus.write.prometheus.receiver]
+  forward_to = [prometheus.remote_write.prometheus.receiver]
 }
 
 // tracing configuration
@@ -67,7 +67,7 @@ otelcol.exporter.otlp "default" {
 }
 
 otelcol.exporter.prometheus "to_prometheus" {
-  forward_to = [prometheus.write.prometheus.receiver]
+  forward_to = [prometheus.remote_write.prometheus.receiver]
 }
 
 otelcol.exporter.loki "to_loki" {
