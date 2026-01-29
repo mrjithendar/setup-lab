@@ -23,9 +23,6 @@ otelcol.exporter.otlp "tempo" {
     client {
       endpoint = "tempo:4317"
     }
-    tls {
-      insecure = true
-    }
 }
 
 // dicover docker containers for log processing
@@ -77,11 +74,11 @@ otelcol.exporter.prometheus "to_prometheus" {
   forward_to = [prometheus.remote_write.prometheus.receiver]
 }
 
-otelcol.exporter.loki "to_loki" {
+otelcol.exporter.loki "loki" {
   forward_to = [loki.write.loki.receiver]
 }
 
-otelcol.exporter.loki "to_tempo" {
+otelcol.exporter.loki "tempo" {
   forward_to = [otelcol.exporter.otlp.tempo.receiver]
 }
 
