@@ -3,47 +3,46 @@ logging {
   format = "logfmt"
 }
 
-// 1. Discover containers
+// 1. Discover the containers (Raw metadata)
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// 2. Relabeling Logic: The "Senior Dev" way
-loki.relabel "clean_labels" {
-  forward_to = [loki.source.docker.docker_logs.receiver]
-
+// 2. Relabel the TARGETS (This cleans the metadata BEFORE log collection)
+discovery.relabel "clean_labels" {
   targets = discovery.docker.containers.targets
 
-  // Extract container name and set it as 'service'
-  // Docker names usually come in as '/container_name'
+  // Strip the leading slash from container names
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
     target_label  = "service"
   }
 
-  // Optional: Keep the image name for easier debugging
-  rule {
-    source_labels = ["__meta_docker_container_image"]
-    target_label  = "container_image"
-  }
-
-  // Map Docker's internal 'name' to a standard 'container' label
+  // Standardize the 'container' label
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
     target_label  = "container"
   }
+
+  // Keep the image name for context
+  rule {
+    source_labels = ["__meta_docker_container_image"]
+    target_label  = "image"
+  }
 }
 
-// 3. Source logs using the relabeled targets
+// 3. Source the logs using the cleaned targets
 loki.source.docker "docker_logs" {
-  host       = "unix:///var/run/docker.sock"
-  targets    = loki.relabel.clean_labels.output
+  host    = "unix:///var/run/docker.sock"
+  // Use the .output from the discovery.relabel component
+  targets = discovery.relabel.clean_labels.output
+  
   forward_to = [loki.write.loki_endpoint.receiver]
 }
 
-// 4. Ship it
+// 4. Ship it to Loki
 loki.write "loki_endpoint" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
