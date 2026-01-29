@@ -36,6 +36,19 @@ discovery.docker "docker_containers" {
 
 discovery.relabel "log_processing" {
   targets = discovery.docker.docker_containers.targets
+  // DROP: Specific binary/non-metrics ports
+  rule {
+    source_labels = ["__address__"]
+    regex         = ".*:(4317|4318|9092|3306|80)" 
+    action        = "drop"
+  }
+  // OPTIONAL BUT RECOMMENDED: Only scrape containers with a specific label
+  // This is the cleanest way to prevent these errors forever
+  // rule {
+  //   source_labels = ["__meta_docker_container_label_prometheus_io_scrape"]
+  //   regex         = "true"
+  //   action        = "keep"
+  // }
   // Drop targets on ports we know aren't Prometheus exporters
   rule {
     source_labels = ["__address__"]
