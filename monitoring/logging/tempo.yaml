@@ -66,9 +66,9 @@ overrides:
 ingester:
   max_block_duration: 5m
 
-compactor:
-  compaction:
-    block_retention: 48h
+# compactor:
+#   compaction:
+#     block_retention: 48h
 
 ingest:
   enabled: true
