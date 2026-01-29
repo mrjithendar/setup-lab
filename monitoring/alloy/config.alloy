@@ -93,3 +93,29 @@ loki.source.file "log_scrape" {
 loki.process "filter_logs" {
   forward_to = [loki.write.loki.receiver]
 }
+
+// This replaces the entire node-exporter container
+prometheus.exporter.unix "local_system" {
+  // These paths are necessary if Alloy is running in Docker
+  procfs_path = "/host/proc"
+  sysfs_path  = "/host/sys"
+  rootfs_path = "/host/root"
+}
+
+prometheus.scrape "node_metrics" {
+  targets    = prometheus.exporter.unix.local_system.targets
+  forward_to = [prometheus.remote_write.prometheus.receiver]
+}
+
+// This replaces the entire google/cadvisor container
+prometheus.exporter.cadvisor "all_containers" {
+  docker_only = true
+  // Optional: If you want to filter out specific noisy metrics
+  // disabled_metrics = ["diskio", "tcp"]
+}
+
+// Scrape the internal exporter
+prometheus.scrape "cadvisor" {
+  targets    = prometheus.exporter.cadvisor.all_containers.targets
+  forward_to = [prometheus.remote_write.prometheus.receiver]
+}

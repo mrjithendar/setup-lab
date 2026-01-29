@@ -46,10 +46,11 @@ services:
       - /etc/alloy/config.alloy
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /proc:/host/proc:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # CRITICAL: These allow Alloy to see the HOST metrics
+      - /:/host/root:ro,rslave
       - /sys:/host/sys:ro
-      - /:/host/root:ro
+      - /proc:/host/proc:ro
     ports:
       - "12345:12345"
       # - "4317:4317"   # OTLP gRPC ingress
@@ -103,36 +104,6 @@ services:
       - -tempo-push-url=http://tempo:4317
     depends_on:
       - tempo
-    networks:
-      - monitoring_net
-      - wordpress_net
-
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    restart: unless-stopped
-    pid: host
-    volumes:
-      - /:/host:ro,rslave
-    command:
-      - --path.rootfs=/host
-    ports:
-      - "9100:9100"
-    networks:
-      - monitoring_net
-      - wordpress_net
-
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: cadvisor
-    restart: unless-stopped
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker:/var/lib/docker:ro
-    ports:
-      - "8080:8080"
     networks:
       - monitoring_net
       - wordpress_net
