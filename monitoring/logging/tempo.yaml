@@ -3,7 +3,7 @@ stream_over_http_enabled: true
 
 server:
   http_listen_port: 3200
-  log_level: info
+  log_level: debug
 
 distributor:
   ingester_write_path_enabled: false
@@ -66,6 +66,12 @@ overrides:
     metrics_generator:
       processors: ["span-metrics", "service-graphs"]
       generate_native_histograms: both
+
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: inmemory
 
 ingest:
   enabled: true

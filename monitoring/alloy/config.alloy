@@ -1,67 +1,33 @@
-// ------------------------------------
+logging {
+  level = "info"
+}
+
 // Docker discovery
-// ------------------------------------
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// ------------------------------------
-// Relabel discovered containers
-// ------------------------------------
+// Relabel Docker metadata
 discovery.relabel "containers" {
   targets = discovery.docker.containers.targets
 
-  // Container name (remove leading "/")
   rule {
-    action        = "replace"
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(.*)"
-    target_label  = "container"
-    replacement   = "$1"
+    target_label = "container"
+    replacement  = "${__meta_docker_container_name}"
   }
 
-  // Docker Compose service
   rule {
-    action        = "replace"
-    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
-    target_label  = "service"
+    target_label = "image"
+    replacement  = "${__meta_docker_container_image}"
   }
 
-  // Docker Compose project
   rule {
-    action        = "replace"
-    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
-    target_label  = "project"
+    target_label = "service"
+    replacement  = "${__meta_docker_container_name}"
   }
 
-  // Hostname
   rule {
-    action        = "replace"
-    target_label  = "host"
-    replacement   = constants.hostname
-  }
-
-  // Drop noisy internal labels
-  rule {
-    action = "labeldrop"
-    regex  = "__meta_docker_.*"
-  }
-}
-
-// ------------------------------------
-// Read Docker logs
-// ------------------------------------
-loki.source.docker "containers" {
-  host       = "unix:///var/run/docker.sock"
-  targets    = discovery.relabel.containers.output
-  forward_to = [loki.write.local_loki.receiver]
-}
-
-// ------------------------------------
-// Push logs to Loki
-// ------------------------------------
-loki.write "local_loki" {
-  endpoint {
-    url = "http://loki:3100/loki/api/v1/push"
+    target_label = "job"
+    replacement  = "docker"
   }
 }
