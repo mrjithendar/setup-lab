@@ -48,7 +48,7 @@ loki.process "logs" {
   }
 
   stage.labels {
-    values = ["container", "service", "image"]
+    values = {"container", "service", "image"}
   }
 
   forward_to = [loki.write.default.receiver]
