@@ -29,6 +29,15 @@ otelcol.exporter.otlp "tempo" {
   }
 }
 
+// tracing configuration
+tracing {
+  // 1.0	Send 100% of traces
+  // 0.1	Send 10% of traces
+  // 0.01	Send 1% of traces
+  sampling_fraction = 1.0
+  write_to          = [otelcol.exporter.otlp.tempo.input]
+}
+
 // dicover docker containers for log processing
 discovery.docker "docker_containers" {
   host = "unix:///var/run/docker.sock"
@@ -85,12 +94,6 @@ loki.source.docker "docker_logs" {
 prometheus.scrape "metrics_collector" {
   targets = discovery.docker.docker_containers.targets
   forward_to = [prometheus.remote_write.prometheus.receiver]
-}
-
-// tracing configuration
-tracing {
-  sampling_fraction = 0.1
-  write_to          = [otelcol.exporter.otlp.tempo.input]
 }
 
 // var logs processing
