@@ -70,7 +70,7 @@ loki.source.docker "docker_logs" {
 
 // scrape docker metrics and send to prometheus
 prometheus.scrape "metrics_collector" {
-  targets = discovery.relabel.metrics_filter.output
+  targets = discovery.relabel.log_processing.output
   forward_to = [prometheus.remote_write.prometheus.receiver]
 }
 
