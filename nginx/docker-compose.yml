@@ -10,8 +10,6 @@ services:
       - wp_data:/var/www/html
       - ./nginx:/etc/nginx/conf.d
       - ./certbot/conf:/etc/letsencrypt
-    depends_on:
-      - wordpress
     networks:
       - wordpress_net
       - monitoring_net
@@ -24,11 +22,6 @@ services:
     networks:
       - wordpress_net
       - monitoring_net
-
-volumes:
-  db_data:
-  wp_data:
-  redis_data:
 
 networks:
   wordpress_net:
