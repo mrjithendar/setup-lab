@@ -1,6 +1,7 @@
 logging {
   level    = "debug"
   format   = "json"
+  write_to = [loki.write.loki.receiver]
 }
 
 // prometheus writer configuration
@@ -15,6 +16,16 @@ loki.write "loki" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
+}
+
+// tempo writer configuration
+otelcol.exporter.otlp "tempo" {
+    client {
+      endpoint = "tempo:4317"
+    }
+    tls {
+      insecure = true
+    }
 }
 
 // dicover docker containers for log processing
@@ -37,7 +48,21 @@ prometheus.scrape "metrics_collector" {
 // tracing configuration
 tracing {
   sampling_fraction = 0.1
-  write_to          = [otelcol.exporter.otlp.default.input]
+  write_to          = [otelcol.exporter.otlp.otlp_exporter.input]
+}
+
+
+
+otelcol.exporter.prometheus "to_prometheus" {
+  forward_to = [prometheus.remote_write.prometheus.receiver]
+}
+
+otelcol.exporter.loki "to_loki" {
+  forward_to = [loki.write.loki.receiver]
+}
+
+otelcol.exporter.loki "to_tempo" {
+  forward_to = [loki.write.tempo.receiver]
 }
 
 otelcol.receiver.otlp "otlp_receiver" {
@@ -55,23 +80,6 @@ otelcol.receiver.otlp "otlp_receiver" {
     logs    = [otelcol.exporter.loki.to_loki.input]
     traces  = [otelcol.exporter.otlp.tempo.input]
   }
-}
-
-otelcol.exporter.otlp "default" {
-    client {
-      endpoint = "tempo:4317"
-    }
-    tls {
-      insecure = true
-    }
-}
-
-otelcol.exporter.prometheus "to_prometheus" {
-  forward_to = [prometheus.remote_write.prometheus.receiver]
-}
-
-otelcol.exporter.loki "to_loki" {
-  forward_to = [loki.write.loki.receiver]
 }
 
 // var logs processing

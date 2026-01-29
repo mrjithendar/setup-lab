@@ -15,10 +15,6 @@ distributor:
           endpoint: "tempo:4317"
         http:
           endpoint: "tempo:4318"
-  #log_received_spans:
-  #    enabled: true
-  #  log_discarded_spans:
-  #    enabled: true
 
 backend_scheduler:
   provider:
@@ -68,10 +64,11 @@ overrides:
       generate_native_histograms: both
 
 ingester:
-  lifecycler:
-    ring:
-      kvstore:
-        store: inmemory
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 48h
 
 ingest:
   enabled: true
@@ -83,4 +80,4 @@ block_builder:
   consume_cycle_duration: 30s
 
 usage_report:
-  reporting_enabled: false
+  reporting_enabled: true
