@@ -2,6 +2,8 @@ services:
   nginx:
     image: nginx:alpine
     container_name: nginx-server
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # This maps the name to the host IP
     restart: always
     ports:
       - "80:80"
