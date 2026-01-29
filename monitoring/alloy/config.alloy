@@ -36,6 +36,12 @@ discovery.docker "docker_containers" {
 
 discovery.relabel "log_processing" {
   targets = discovery.docker.docker_containers.targets
+  // Drop targets on ports we know aren't Prometheus exporters
+  rule {
+    source_labels = ["__address__"]
+    regex         = ".*:(9092|9000|3306|80)" // Drop Kafka, PHP, MySQL, HTTP
+    action        = "drop"
+  }
   // Rule: Drop Alloy's own logs to avoid infinite loops
   rule {
     source_labels = ["__meta_docker_container_name"]
@@ -62,9 +68,9 @@ loki.source.docker "docker_logs" {
   forward_to = [loki.write.loki.receiver]
 }
 
-// scrape metrics and send to prometheus
+// scrape docker metrics and send to prometheus
 prometheus.scrape "metrics_collector" {
-  targets = discovery.docker.docker_containers.targets
+  targets = discovery.relabel.metrics_filter.output
   forward_to = [prometheus.remote_write.prometheus.receiver]
 }
 
