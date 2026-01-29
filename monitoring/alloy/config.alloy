@@ -3,29 +3,49 @@ logging {
   format = "logfmt"
 }
 
-// 1. Discover Docker containers
-discovery.docker "linux_containers" {
+// 1. Discover containers
+discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// 2. Collect logs from the discovered targets
-loki.source.docker "docker_logs" {
-  host    = "unix:///var/run/docker.sock"
-  targets = discovery.docker.linux_containers.targets
-  
-  // Forward logs to the loki.write component defined below
-  forward_to = [loki.write.local_loki.receiver]
+// 2. Relabeling Logic: The "Senior Dev" way
+loki.relabel "clean_labels" {
+  forward_to = [loki.source.docker.docker_logs.receiver]
+
+  targets = discovery.docker.containers.targets
+
+  // Extract container name and set it as 'service'
+  // Docker names usually come in as '/container_name'
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "service"
+  }
+
+  // Optional: Keep the image name for easier debugging
+  rule {
+    source_labels = ["__meta_docker_container_image"]
+    target_label  = "container_image"
+  }
+
+  // Map Docker's internal 'name' to a standard 'container' label
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
 }
 
-// 3. Write logs to Loki
-loki.write "local_loki" {
+// 3. Source logs using the relabeled targets
+loki.source.docker "docker_logs" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = loki.relabel.clean_labels.output
+  forward_to = [loki.write.loki_endpoint.receiver]
+}
+
+// 4. Ship it
+loki.write "loki_endpoint" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
-    
-    // Optional: Add basic auth if your Loki instance requires it
-    // basic_auth {
-    //   username = "your_username"
-    //   password = "your_password"
-    // }
   }
 }
