@@ -43,7 +43,7 @@ loki.process "logs" {
   stage.static_labels {
     values = {
       env = "vultr-vm",
-      host = "jithendar"
+      host = "jithendar",
     }
   }
 
