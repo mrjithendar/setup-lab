@@ -71,6 +71,11 @@ overrides:
 
 ingester:
   max_block_duration: 5m
+  lifecycler:
+    ring:
+      replication_factor: 1
+      kvstore:
+        store: memberlist
 
 # compactor:
 #   compaction:
