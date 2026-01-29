@@ -9,7 +9,7 @@ services:
     volumes:
       - wordpress_wp_data:/var/www/html
       - ./conf:/etc/nginx/conf.d
-      - ./certbot/conf:/etc/letsencrypt
+      - certbot_data:/etc/letsencrypt
     networks:
       - wordpress_net
       - monitoring_net
@@ -18,12 +18,13 @@ services:
     image: certbot/dns-cloudflare
     container_name: certbot-cloudflare
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
+      - certbot_data:/etc/letsencrypt
     networks:
       - wordpress_net
       - monitoring_net
 
 volumes:
+  certbot_data:
   wordpress_wp_data:
     external: true
     name: wordpress_wp_data
