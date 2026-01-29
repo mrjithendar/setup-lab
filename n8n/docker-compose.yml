@@ -6,6 +6,10 @@ services:
     container_name: n8n
     restart: unless-stopped
     environment:
+      - N8N_TRACING_ENABLED=true
+      - N8N_TRACING_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
+      - OTEL_SERVICE_NAME=n8n
       - N8N_METRICS=true                     # This enables the /metrics endpoint
       - N8N_METRICS_INCLUDE_DEFAULT_METRICS=true # Includes Node.js/system metrics
       - N8N_METRICS_INCLUDE_CACHE_METRICS=true   # Optional: Useful for monitoring performance
