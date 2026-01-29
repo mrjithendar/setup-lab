@@ -31,3 +31,30 @@ discovery.relabel "containers" {
     replacement  = "docker"
   }
 }
+
+// LOGS → Loki
+loki.source.docker "logs" {
+  targets = discovery.relabel.containers.output
+  forward_to = [loki.process.logs.receiver]
+}
+
+loki.process "logs" {
+  stage.static_labels {
+    values = {
+      env = "vultr-vm"
+      host = "jithendar"
+    }
+  }
+
+  stage.labels {
+    values = ["container", "service", "image"]
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
