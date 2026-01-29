@@ -3,59 +3,29 @@ logging {
   format = "logfmt"
 }
 
-// Docker discovery
-discovery.docker "containers" {
+// 1. Discover Docker containers
+discovery.docker "linux_containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// Relabel Docker metadata
-discovery.relabel "containers" {
-  targets = discovery.docker.containers.targets
-
-  rule {
-    target_label = "container"
-    replacement  = "${__meta_docker_container_name}"
-  }
-
-  rule {
-    target_label = "image"
-    replacement  = "${__meta_docker_container_image}"
-  }
-
-  rule {
-    target_label = "service"
-    replacement  = "${__meta_docker_container_name}"
-  }
-
-  rule {
-    target_label = "job"
-    replacement  = "docker"
-  }
+// 2. Collect logs from the discovered targets
+loki.source.docker "docker_logs" {
+  host    = "unix:///var/run/docker.sock"
+  targets = discovery.docker.linux_containers.targets
+  
+  // Forward logs to the loki.write component defined below
+  forward_to = [loki.write.local_loki.receiver]
 }
 
-// LOGS → Loki
-loki.source.docker "logs" {
-  targets = discovery.relabel.containers.output
-  forward_to = [loki.process.logs.receiver]
-}
-
-loki.process "logs" {
-  stage.static_labels {
-    values = {
-      env = "vultr-vm",
-      host = "jithendar",
-    }
-  }
-
-  stage.labels {
-    values = {"container", "service", "image",}
-  }
-
-  forward_to = [loki.write.default.receiver]
-}
-
-loki.write "default" {
+// 3. Write logs to Loki
+loki.write "local_loki" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
+    
+    // Optional: Add basic auth if your Loki instance requires it
+    // basic_auth {
+    //   username = "your_username"
+    //   password = "your_password"
+    // }
   }
 }
