@@ -1,0 +1,41 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-server
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - wp_data:/var/www/html
+      - ./nginx:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - wordpress
+    networks:
+      - wordpress_net
+      - monitoring_net
+
+  certbot:
+    image: certbot/dns-cloudflare
+    container_name: certbot-cloudflare
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+    networks:
+      - wordpress_net
+      - monitoring_net
+
+volumes:
+  db_data:
+  wp_data:
+  redis_data:
+
+networks:
+  wordpress_net:
+    external: true
+    name: wordpress_default
+
+  monitoring_net:
+    external: true
+    name: monitoring_default
+
