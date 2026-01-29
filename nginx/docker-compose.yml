@@ -8,7 +8,7 @@ services:
       - "443:443"
     volumes:
       - wordpress_wp_data:/var/www/html
-      - ./nginx:/etc/nginx/conf.d
+      - ./conf:/etc/nginx/conf.d
       - ./certbot/conf:/etc/letsencrypt
     networks:
       - wordpress_net
