@@ -84,7 +84,7 @@ otelcol.exporter.loki "to_loki" {
 }
 
 otelcol.exporter.loki "to_tempo" {
-  forward_to = [loki.write.tempo.receiver]
+  forward_to = [otelcol.exporter.otlp.tempo.receiver]
 }
 
 otelcol.receiver.otlp "otlp_receiver" {
