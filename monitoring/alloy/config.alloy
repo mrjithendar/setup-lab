@@ -1,49 +1,78 @@
-logging {
-  level = "debug"
-  format = "logfmt"
+// 1. METRICS SECTION
+// Host-level metrics (CPU, RAM, Disk)
+prometheus.exporter.unix "host_stats" {
+  procfs_path = "/proc"
+  sysfs_path  = "/sys"
 }
 
-// 1. Discover the containers (Raw metadata)
-discovery.docker "containers" {
+// Container-level metrics (cAdvisor)
+prometheus.exporter.cadvisor "all_containers" {
+  docker_only = true
+}
+
+// Scrape and ship all metrics
+prometheus.scrape "metrics_collector" {
+  targets = concat(
+    prometheus.exporter.unix.host_stats.targets,
+    prometheus.exporter.cadvisor.all_containers.targets,
+  )
+  forward_to = [prometheus.remote_write.prom_server.receiver]
+  
+  scrape_interval = "15s"
+}
+
+// Prometheus Write Endpoint
+prometheus.remote_write "prom_server" {
+  endpoint {
+    url = "http://prometheus:9090/prometheus/api/v1/write"
+    // Uncomment for Basic Auth
+    // basic_auth {
+    //   username = "admin"
+    //   password = "password"
+    // }
+  }
+}
+
+// 2. LOGS SECTION
+// Discover all containers on the host
+discovery.docker "all_containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// 2. Relabel the TARGETS (This cleans the metadata BEFORE log collection)
-discovery.relabel "clean_labels" {
-  targets = discovery.docker.containers.targets
+// Standardize labels and filter noise
+discovery.relabel "log_processing" {
+  targets = discovery.docker.all_containers.targets
 
-  // Strip the leading slash from container names
+  // Drop Alloy's own logs to prevent infinite loops
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/alloy"
+    action        = "drop"
+  }
+
+  // Create 'service' label from container name (strip leading /)
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
     target_label  = "service"
   }
 
-  // Standardize the 'container' label
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(.*)"
-    target_label  = "container"
-  }
-
-  // Keep the image name for context
+  // Keep the image name for debugging
   rule {
     source_labels = ["__meta_docker_container_image"]
     target_label  = "image"
   }
 }
 
-// 3. Source the logs using the cleaned targets
+// Collect the logs
 loki.source.docker "docker_logs" {
   host    = "unix:///var/run/docker.sock"
-  // Use the .output from the discovery.relabel component
-  targets = discovery.relabel.clean_labels.output
-  
-  forward_to = [loki.write.loki_endpoint.receiver]
+  targets = discovery.relabel.log_processing.output
+  forward_to = [loki.write.loki_server.receiver]
 }
 
-// 4. Ship it to Loki
-loki.write "loki_endpoint" {
+// Loki Write Endpoint
+loki.write "loki_server" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
