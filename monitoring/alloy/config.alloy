@@ -78,7 +78,7 @@ otelcol.exporter.loki "to_loki" {
 local.file_match "varlogs" {
   path_targets = [
     {
-      "__path__" = "/var/log/*.log"
+      "__path__" = "/var/log/*.log",
       }
     ]
   sync_period = "5s"
@@ -91,10 +91,5 @@ loki.source.file "log_scrape" {
 }
 
 loki.process "filter_logs" {
-  // stage.drop {
-  //   source = ""
-  //   expression  = ".*Connection closed by authenticating user root"
-  //   drop_counter_reason = "noisy"
-  // }
   forward_to = [loki.write.loki.receiver]
 }
