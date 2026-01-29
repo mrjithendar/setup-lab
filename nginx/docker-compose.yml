@@ -23,6 +23,9 @@ services:
       - wordpress_net
       - monitoring_net
 
+volumes:
+  wp_data:
+
 networks:
   wordpress_net:
     external: true
