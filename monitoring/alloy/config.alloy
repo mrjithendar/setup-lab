@@ -33,6 +33,28 @@ discovery.docker "docker_containers" {
   host = "unix:///var/run/docker.sock"
 }
 
+discovery.relabel "log_processing" {
+  targets = discovery.docker.docker_containers.targets
+  // Rule: Drop Alloy's own logs to avoid infinite loops
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/alloy"
+    action        = "drop"
+  }
+  // Rule: Extract the container name and strip the leading slash
+  // Example: '/wordpress_app' becomes 'wordpress_app'
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "service"
+  }
+  // Rule: Keep the container image name for debugging
+  rule {
+    source_labels = ["__meta_docker_container_image"]
+    target_label  = "image"
+  }
+}
+
 loki.source.docker "docker_logs" {
   host    = "unix:///var/run/docker.sock"
   targets = discovery.relabel.log_processing.output
