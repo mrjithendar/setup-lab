@@ -19,6 +19,7 @@ services:
     container_name: certbot-cloudflare
     volumes:
       - certbot_data:/etc/letsencrypt
+      - ./cloudflare.ini:/etc/letsencrypt/cloudflare.ini:ro
     networks:
       - wordpress_net
       - monitoring_net
