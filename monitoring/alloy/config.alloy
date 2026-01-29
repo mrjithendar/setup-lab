@@ -70,35 +70,6 @@ tracing {
   write_to          = [otelcol.exporter.otlp.tempo.input]
 }
 
-otelcol.exporter.prometheus "to_prometheus" {
-  forward_to = [prometheus.remote_write.prometheus.receiver]
-}
-
-otelcol.exporter.loki "loki" {
-  forward_to = [loki.write.loki.receiver]
-}
-
-otelcol.exporter.loki "tempo" {
-  forward_to = [otelcol.exporter.otlp.tempo.receiver]
-}
-
-otelcol.receiver.otlp "otlp_receiver" {
-  // OpenTelemetry Protocol (OTLP) receiver configuration (from Alloy)
-  grpc {
-    endpoint = "0.0.0.0:4317"
-  }
-  // HTTP receiver configuration (from Alloy)
-  http {
-    endpoint = "0.0.0.0:4318"
-  }
-
-  output {
-    metrics = [otelcol.exporter.prometheus.to_prometheus.input]
-    logs    = [otelcol.exporter.loki.to_loki.input]
-    traces  = [otelcol.exporter.otlp.tempo.input]
-  }
-}
-
 // var logs processing
 local.file_match "varlogs" {
   path_targets = [
