@@ -20,14 +20,13 @@ loki.write "loki" {
 
 // tempo writer configuration
 otelcol.exporter.otlp "tempo" {
-    client {
-      endpoint = "tempo:4317"
-      timeout  = "30s"  // Increase this from the default 10s to 30s
-      tls {
-        insecure             = true
-        insecure_skip_verify = true
-        }
-    }
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure             = true
+      insecure_skip_verify = true
+      }
+  }
 }
 
 // dicover docker containers for log processing
