@@ -79,7 +79,7 @@ local.file_match "varlogs" {
   path_targets = [
     {
       "__path__" = "/var/log/*.log",
-      }
+      },
     ]
   sync_period = "5s"
 }
