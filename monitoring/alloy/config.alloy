@@ -1,89 +1,51 @@
-// 1. METRICS SECTION
-// Host-level metrics (CPU, RAM, Disk)
-prometheus.exporter.unix "host_stats" {
-  procfs_path = "/proc"
-  sysfs_path  = "/sys"
+logging {
+  level    = "debug"
+  format   = "json"
 }
 
-// Container-level metrics (cAdvisor)
-prometheus.exporter.cadvisor "all_containers" {
-  docker_only = true
-}
-
-// Scrape and ship all metrics
-prometheus.scrape "metrics_collector" {
-  targets = concat(
-    prometheus.exporter.unix.host_stats.targets,
-    prometheus.exporter.cadvisor.all_containers.targets,
-  )
-  forward_to = [prometheus.remote_write.prom_server.receiver]
-  
-  scrape_interval = "15s"
-}
-
-// Prometheus Write Endpoint
-prometheus.remote_write "prom_server" {
+// prometheus writer configuration
+prometheus.write "prometheus" {
   endpoint {
     url = "http://prometheus:9090/prometheus/api/v1/write"
-    // Uncomment for Basic Auth
-    // basic_auth {
-    //   username = "admin"
-    //   password = "password"
-    // }
   }
 }
 
-// 2. LOGS SECTION
-// Discover all containers on the host
-discovery.docker "all_containers" {
-  host = "unix:///var/run/docker.sock"
-}
-
-// Standardize labels and filter noise
-discovery.relabel "log_processing" {
-  targets = discovery.docker.all_containers.targets
-
-  // Drop Alloy's own logs to prevent infinite loops
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/alloy"
-    action        = "drop"
-  }
-
-  // Create 'service' label from container name (strip leading /)
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(.*)"
-    target_label  = "service"
-  }
-
-  // Keep the image name for debugging
-  rule {
-    source_labels = ["__meta_docker_container_image"]
-    target_label  = "image"
-  }
-}
-
-// Collect the logs
-loki.source.docker "docker_logs" {
-  host    = "unix:///var/run/docker.sock"
-  targets = discovery.relabel.log_processing.output
-  forward_to = [loki.write.loki_server.receiver]
-}
-
-// Loki Write Endpoint
-loki.write "loki_server" {
+// loki writer configuration
+loki.write "loki" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
 
-// 3. TRACES SECTION (OTLP -> Tempo)
-// 1. Accept traces from your applications
+// dicover docker containers for log processing
+discovery.docker "docker_containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+loki.source.docker "docker_logs" {
+  host    = "unix:///var/run/docker.sock"
+  targets = discovery.relabel.log_processing.output
+  forward_to = [loki.write.loki.receiver]
+}
+
+// scrape metrics and send to prometheus
+prometheus.scrape "metrics_collector" {
+  targets = discovery.docker.docker_containers.targets
+  forward_to = [prometheus.write.prometheus.receiver]
+}
+
+// tracing configuration
+tracing {
+  sampling_fraction = 0.1
+  write_to          = [otelcol.exporter.otlp.default.input]
+}
+
 otelcol.receiver.otlp "otlp_receiver" {
+  // OpenTelemetry Protocol (OTLP) receiver configuration (from Alloy)
   grpc {
     endpoint = "0.0.0.0:4317"
   }
+  // HTTP receiver configuration (from Alloy)
   http {
     endpoint = "0.0.0.0:4318"
   }
@@ -95,21 +57,44 @@ otelcol.receiver.otlp "otlp_receiver" {
   }
 }
 
-// 2. Export traces to Tempo
-otelcol.exporter.otlp "tempo" {
-  client {
-    endpoint = "tempo:4317" // Adjust to your Tempo address
+otelcol.exporter.otlp "default" {
+    client {
+      endpoint = "tempo:4317"
+    }
     tls {
       insecure = true
     }
-  }
 }
 
-// 3. Bonus: Convert OTLP metrics/logs to our existing pipelines
 otelcol.exporter.prometheus "to_prometheus" {
-  forward_to = [prometheus.remote_write.prom_server.receiver]
+  forward_to = [prometheus.write.prometheus.receiver]
 }
 
 otelcol.exporter.loki "to_loki" {
-  forward_to = [loki.write.loki_server.receiver]
+  forward_to = [loki.write.loki.receiver]
+}
+
+// var logs processing
+local.file_match "varlogs" {
+  path_targets = [
+    {
+      "__path__" = "/var/log/*.log"
+      }
+    ]
+  sync_period = "5s"
+}
+
+loki.source.file "log_scrape" {
+  targets    = local.file_match.varlogs.targets
+  forward_to = [loki.process.filter_logs.receiver]
+  tail_from_end = true
+}
+
+loki.process "filter_logs" {
+  // stage.drop {
+  //   source = ""
+  //   expression  = ".*Connection closed by authenticating user root"
+  //   drop_counter_reason = "noisy"
+  // }
+  forward_to = [loki.write.loki.receiver]
 }
