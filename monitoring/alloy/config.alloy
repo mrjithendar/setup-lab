@@ -70,10 +70,8 @@ prometheus.scrape "metrics_collector" {
 // tracing configuration
 tracing {
   sampling_fraction = 0.1
-  write_to          = [otelcol.exporter.otlp.otlp_exporter.input]
+  write_to          = [otelcol.exporter.otlp.tempo.input]
 }
-
-
 
 otelcol.exporter.prometheus "to_prometheus" {
   forward_to = [prometheus.remote_write.prometheus.receiver]
