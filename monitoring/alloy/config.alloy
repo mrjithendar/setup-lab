@@ -1,5 +1,6 @@
 logging {
-  level = "info"
+  level = "debug"
+  format = "logfmt"
 }
 
 // Docker discovery
@@ -41,7 +42,7 @@ loki.source.docker "logs" {
 loki.process "logs" {
   stage.static_labels {
     values = {
-      env = "vultr-vm"
+      env = "vultr-vm",
       host = "jithendar"
     }
   }
