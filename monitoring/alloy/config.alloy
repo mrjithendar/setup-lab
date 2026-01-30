@@ -82,7 +82,7 @@ loki.source.docker "docker_logs" {
 // ✅ File-based logs: /var/log/*.log
 local.file_match "varlogs" {
   path_targets = [
-    { "__path__" = "/var/log/*.log" }
+    { "__path__" = "/var/log/*.log" },
   ]
   sync_period = "5s"
 }
@@ -92,8 +92,8 @@ loki.source.file "varlog_files" {
   tail_from_end = true
 
   labels = {
-    job  = "varlogs"
-    host = "${HOSTNAME}"
+    job  = "varlogs",
+    host = "${HOSTNAME}",
   }
 
   forward_to = [loki.write.loki.receiver]
@@ -104,8 +104,8 @@ loki.source.journal "systemd" {
   path = "/var/log/journal"
 
   labels = {
-    job  = "systemd"
-    host = "${HOSTNAME}"
+    job  = "systemd",
+    host = "${HOSTNAME}",
   }
 
   forward_to = [loki.write.loki.receiver]
