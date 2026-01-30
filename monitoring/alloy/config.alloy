@@ -1,124 +1,105 @@
+// --- LOGGING & TRACING ---
+
 logging {
-  level    = "info"
-  format   = "json"
-  write_to = [loki.write.loki.receiver]
+  level  = "info"
+  format = "json"
 }
 
-// prometheus writer configuration
+tracing {
+  sampling_fraction = 1.0
+  write_to          = [otelcol.exporter.otlp.tempo.input]
+}
+
+// --- EXPORT / WRITE CONFIGURATION ---
+
 prometheus.remote_write "prometheus" {
   endpoint {
     url = "http://prometheus:9090/prometheus/api/v1/write"
   }
 }
 
-// loki writer configuration
 loki.write "loki" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
 
-// tempo writer configuration
 otelcol.exporter.otlp "tempo" {
   client {
     endpoint = "tempo:4317"
     tls {
       insecure             = true
       insecure_skip_verify = true
-      }
+    }
   }
 }
 
-// tracing configuration
-tracing {
-  // 1.0	Send 100% of traces
-  // 0.1	Send 10% of traces
-  // 0.01	Send 1% of traces
-  sampling_fraction = 1.0
-  write_to          = [otelcol.exporter.otlp.tempo.input]
-}
+// --- DISCOVERY & RELABELING ---
 
-// dicover docker containers for log processing
-discovery.docker "docker_containers" {
+discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-discovery.relabel "log_processing" {
-  targets = discovery.docker.docker_containers.targets
-  // DROP: Specific binary/non-metrics ports
-  rule {
-    source_labels = ["__address__"]
-    regex         = ".*:(4317|4318|9092|3306|80)" 
-    action        = "drop"
-  }
-  // OPTIONAL BUT RECOMMENDED: Only scrape containers with a specific label
-  // This is the cleanest way to prevent these errors forever
-  // rule {
-  //   source_labels = ["__meta_docker_container_label_prometheus_io_scrape"]
-  //   regex         = "true"
-  //   action        = "keep"
-  // }
-  // Drop targets on ports we know aren't Prometheus exporters
-  rule {
-    source_labels = ["__address__"]
-    regex         = ".*:(9092|9000|3306|80)" // Drop Kafka, PHP, MySQL, HTTP
-    action        = "drop"
-  }
+// Relabeling for LOGS (Broad: keep almost everything)
+discovery.relabel "logs_filter" {
+  targets = discovery.docker.containers.targets
+
   // Rule: Drop Alloy's own logs to avoid infinite loops
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/alloy"
     action        = "drop"
   }
-  // Rule: Extract the container name and strip the leading slash
-  // Example: '/wordpress_app' becomes 'wordpress_app'
+
+  // Rule: Format service name
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
     target_label  = "service"
   }
-  // Rule: Keep the container image name for debugging
+}
+
+// Relabeling for METRICS (Strict: Only containers with scrape label)
+discovery.relabel "metrics_filter" {
+  targets = discovery.docker.containers.targets
+
+  // Only scrape containers with label: prometheus.io/scrape=true
+  // rule {
+  //   source_labels = ["__meta_docker_container_label_prometheus_io_scrape"]
+  //   regex         = "true"
+  //   action        = "keep"
+  // }
+
   rule {
-    source_labels = ["__meta_docker_container_image"]
-    target_label  = "image"
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
   }
 }
 
+// --- LOG COLLECTION ---
+
 loki.source.docker "docker_logs" {
-  host    = "unix:///var/run/docker.sock"
-  targets = discovery.relabel.log_processing.output
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.logs_filter.output
   forward_to = [loki.write.loki.receiver]
 }
 
-// scrape docker metrics and send to prometheus
-prometheus.scrape "metrics_collector" {
-  targets = discovery.docker.docker_containers.targets
-  forward_to = [prometheus.remote_write.prometheus.receiver]
-}
-
-// var logs processing
 local.file_match "varlogs" {
-  path_targets = [
-    {
-      "__path__" = "/var/log/*.log",
-      },
-    ]
-  sync_period = "5s"
+  path_targets = [{ "__path__" = "/var/log/*.log" }]
+  sync_period  = "5s"
 }
 
 loki.source.file "log_scrape" {
-  targets    = local.file_match.varlogs.targets
-  forward_to = [loki.process.filter_logs.receiver]
+  targets       = local.file_match.varlogs.targets
+  forward_to    = [loki.write.loki.receiver]
   tail_from_end = true
 }
 
-loki.process "filter_logs" {
-  forward_to = [loki.write.loki.receiver]
-}
+// --- METRIC COLLECTION ---
 
-// This replaces the entire node-exporter container
+// Scrape internal exporters
 prometheus.exporter.unix "local_system" {
-  // These paths are necessary if Alloy is running in Docker
   procfs_path = "/host/proc"
   sysfs_path  = "/host/sys"
   rootfs_path = "/host/root"
@@ -129,15 +110,17 @@ prometheus.scrape "node_metrics" {
   forward_to = [prometheus.remote_write.prometheus.receiver]
 }
 
-// This replaces the entire google/cadvisor container
 prometheus.exporter.cadvisor "all_containers" {
   docker_only = true
-  // Optional: If you want to filter out specific noisy metrics
-  // disabled_metrics = ["diskio", "tcp"]
 }
 
-// Scrape the internal exporter
 prometheus.scrape "cadvisor" {
   targets    = prometheus.exporter.cadvisor.all_containers.targets
+  forward_to = [prometheus.remote_write.prometheus.receiver]
+}
+
+// Scrape labeled application containers
+prometheus.scrape "metrics_collector" {
+  targets    = discovery.relabel.metrics_filter.output
   forward_to = [prometheus.remote_write.prometheus.receiver]
 }
