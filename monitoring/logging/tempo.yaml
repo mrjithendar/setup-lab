@@ -9,7 +9,7 @@ memberlist:
     
 server:
   http_listen_port: 3200
-  log_level: debug
+  log_level: info
 
 distributor:
   ingester_write_path_enabled: false
