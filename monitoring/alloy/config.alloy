@@ -1,4 +1,6 @@
-// --- LOGGING & TRACING ---
+// ==============================
+// LOGGING & TRACING
+// ==============================
 
 logging {
   level  = "info"
@@ -10,17 +12,19 @@ tracing {
   write_to          = [otelcol.exporter.otlp.tempo.input]
 }
 
-// --- EXPORT / WRITE CONFIGURATION ---
-
-prometheus.remote_write "prometheus" {
-  endpoint {
-    url = "http://prometheus:9090/prometheus/api/v1/write"
-  }
-}
+// ==============================
+// EXPORTERS
+// ==============================
 
 loki.write "loki" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+prometheus.remote_write "prometheus" {
+  endpoint {
+    url = "http://prometheus:9090/prometheus/api/v1/write"
   }
 }
 
@@ -34,24 +38,27 @@ otelcol.exporter.otlp "tempo" {
   }
 }
 
-// --- DISCOVERY & RELABELING ---
+// ==============================
+// DOCKER DISCOVERY
+// ==============================
 
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// Relabeling for LOGS (Broad)
-discovery.relabel "logs_filter" {
+// ------------------------------
+// Relabel logs (drop Alloy logs)
+// ------------------------------
+
+discovery.relabel "docker_logs" {
   targets = discovery.docker.containers.targets
 
-  // Drop Alloy logs
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/alloy"
     action        = "drop"
   }
 
-  // Service label
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
@@ -59,27 +66,32 @@ discovery.relabel "logs_filter" {
   }
 }
 
-// Relabeling for METRICS
-discovery.relabel "metrics_filter" {
-  targets = discovery.docker.containers.targets
+// ==============================
+// LOG SOURCES
+// ==============================
 
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(.*)"
-    target_label  = "container"
-  }
+//
+// 1️⃣ Docker container logs
+//
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.docker_logs.output
+  forward_to = [loki.process.docker.receiver]
 }
 
-// --- LOG COLLECTION ---
+loki.process "docker" {
+  stage.labels {
+    values = {
+      job = "docker",
+    }
+  }
 
-// ✅ Docker container logs
-loki.source.docker "docker_logs" {
-  host       = "unix:///var/run/docker.sock"
-  targets    = discovery.relabel.logs_filter.output
   forward_to = [loki.write.loki.receiver]
 }
 
-// ✅ File-based logs: /var/log/*.log
+//
+// 2️⃣ File logs: /var/log/*.log
+//
 local.file_match "varlogs" {
   path_targets = [
     { "__path__" = "/var/log/*.log" },
@@ -90,33 +102,47 @@ local.file_match "varlogs" {
 loki.source.file "varlog_files" {
   targets       = local.file_match.varlogs.targets
   tail_from_end = true
+  forward_to    = [loki.process.varlogs.receiver]
+}
 
-  labels = {
-    job  = "varlogs",
-    host = "${HOSTNAME}",
+loki.process "varlogs" {
+  stage.labels {
+    values = {
+      job = "varlogs",
+    }
   }
 
   forward_to = [loki.write.loki.receiver]
 }
 
-// ✅ Journald logs: /var/log/journal
+//
+// 3️⃣ Journald logs: /var/log/journal
+//
 loki.source.journal "systemd" {
-  path = "/var/log/journal"
+  path       = "/var/log/journal"
+  forward_to = [loki.process.systemd.receiver]
+}
 
-  labels = {
-    job  = "systemd",
-    host = "${HOSTNAME}",
+loki.process "systemd" {
+  stage.labels {
+    values = {
+      job = "systemd",
+    }
   }
 
   forward_to = [loki.write.loki.receiver]
 }
 
-// --- METRIC COLLECTION ---
+// ==============================
+// METRICS
+// ==============================
 
+//
+// Node / system metrics (container view)
+//
 prometheus.exporter.unix "local_system" {
-  procfs_path  = "/host/proc"
-  sysfs_path   = "/host/sys"
-  rootfs_path  = "/host/root"
+  procfs_path = "/proc"
+  sysfs_path  = "/sys"
 }
 
 prometheus.scrape "node_metrics" {
@@ -124,16 +150,14 @@ prometheus.scrape "node_metrics" {
   forward_to = [prometheus.remote_write.prometheus.receiver]
 }
 
-prometheus.exporter.cadvisor "all_containers" {
+//
+// cAdvisor (container metrics)
+//
+prometheus.exporter.cadvisor "containers" {
   docker_only = true
 }
 
 prometheus.scrape "cadvisor" {
-  targets    = prometheus.exporter.cadvisor.all_containers.targets
-  forward_to = [prometheus.remote_write.prometheus.receiver]
-}
-
-prometheus.scrape "metrics_collector" {
-  targets    = discovery.relabel.metrics_filter.output
+  targets    = prometheus.exporter.cadvisor.containers.targets
   forward_to = [prometheus.remote_write.prometheus.receiver]
 }
