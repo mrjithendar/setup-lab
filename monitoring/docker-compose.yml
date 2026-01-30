@@ -48,9 +48,9 @@ services:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # CRITICAL: These allow Alloy to see the HOST metrics
-      - /:/host/root:ro,rslave
-      - /sys:/host/sys:ro
-      - /proc:/host/proc:ro
+      - /var/log:/var/log:ro
+      - /var/log/journal:/var/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
     ports:
       - "12345:12345"
       # - "4317:4317"   # OTLP gRPC ingress

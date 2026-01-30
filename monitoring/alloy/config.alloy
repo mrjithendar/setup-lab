@@ -40,18 +40,18 @@ discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// Relabeling for LOGS (Broad: keep almost everything)
+// Relabeling for LOGS (Broad)
 discovery.relabel "logs_filter" {
   targets = discovery.docker.containers.targets
 
-  // Rule: Drop Alloy's own logs to avoid infinite loops
+  // Drop Alloy logs
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/alloy"
     action        = "drop"
   }
 
-  // Rule: Format service name
+  // Service label
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
@@ -59,16 +59,9 @@ discovery.relabel "logs_filter" {
   }
 }
 
-// Relabeling for METRICS (Strict: Only containers with scrape label)
+// Relabeling for METRICS
 discovery.relabel "metrics_filter" {
   targets = discovery.docker.containers.targets
-
-  // Only scrape containers with label: prometheus.io/scrape=true
-  // rule {
-  //   source_labels = ["__meta_docker_container_label_prometheus_io_scrape"]
-  //   regex         = "true"
-  //   action        = "keep"
-  // }
 
   rule {
     source_labels = ["__meta_docker_container_name"]
@@ -79,30 +72,51 @@ discovery.relabel "metrics_filter" {
 
 // --- LOG COLLECTION ---
 
+// ✅ Docker container logs
 loki.source.docker "docker_logs" {
   host       = "unix:///var/run/docker.sock"
   targets    = discovery.relabel.logs_filter.output
   forward_to = [loki.write.loki.receiver]
 }
 
+// ✅ File-based logs: /var/log/*.log
 local.file_match "varlogs" {
-  path_targets = [{ "__path__" = "/var/log/*.log" }]
-  sync_period  = "5s"
+  path_targets = [
+    { "__path__" = "/var/log/*.log" }
+  ]
+  sync_period = "5s"
 }
 
-loki.source.file "log_scrape" {
+loki.source.file "varlog_files" {
   targets       = local.file_match.varlogs.targets
-  forward_to    = [loki.write.loki.receiver]
   tail_from_end = true
+
+  labels = {
+    job  = "varlogs"
+    host = "${HOSTNAME}"
+  }
+
+  forward_to = [loki.write.loki.receiver]
+}
+
+// ✅ Journald logs: /var/log/journal
+loki.source.journal "systemd" {
+  path = "/var/log/journal"
+
+  labels = {
+    job  = "systemd"
+    host = "${HOSTNAME}"
+  }
+
+  forward_to = [loki.write.loki.receiver]
 }
 
 // --- METRIC COLLECTION ---
 
-// Scrape internal exporters
 prometheus.exporter.unix "local_system" {
-  procfs_path = "/host/proc"
-  sysfs_path  = "/host/sys"
-  rootfs_path = "/host/root"
+  procfs_path  = "/host/proc"
+  sysfs_path   = "/host/sys"
+  rootfs_path  = "/host/root"
 }
 
 prometheus.scrape "node_metrics" {
@@ -119,7 +133,6 @@ prometheus.scrape "cadvisor" {
   forward_to = [prometheus.remote_write.prometheus.receiver]
 }
 
-// Scrape labeled application containers
 prometheus.scrape "metrics_collector" {
   targets    = discovery.relabel.metrics_filter.output
   forward_to = [prometheus.remote_write.prometheus.receiver]
