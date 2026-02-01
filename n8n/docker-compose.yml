@@ -23,6 +23,7 @@ services:
       - WEBHOOK_URL=https://jithendar.com/n8n/
       - N8N_SECURE_COOKIE=true
       - N8N_RUNNERS_ENABLED=false
+      - N8N_LISTEN_ADDRESS=0.0.0.0
     volumes:
       - n8n_data:/home/node/.n8n
     networks:
