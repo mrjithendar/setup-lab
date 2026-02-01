@@ -15,7 +15,7 @@ services:
       - monitoring_net
 
   wordpress:
-    image: wordpress:php8.2-fpm
+    build: .
     container_name: wordpress-app
     restart: always
     environment:

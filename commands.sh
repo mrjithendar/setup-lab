@@ -1,6 +1,6 @@
-docker network connect monitoring_monitoring_net nginx-server
-docker restart nginx-server
-docker network connect monitoring_monitoring_net n8n
+docker compose down
+docker compose build wordpress; docker compose up -d
+
 
 chmod 600 cloudflare.ini
 
@@ -12,3 +12,10 @@ docker compose run --rm certbot renew --force-renewal
 docker compose run --rm certbot renew --dry-run
 
 docker restart nginx-server
+
+cat <<EOF | sudo tee /etc/sysctl.d/99-redis.conf
+vm.overcommit_memory = 1
+EOF
+
+sudo sysctl --system
+
