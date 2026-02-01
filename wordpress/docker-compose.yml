@@ -30,9 +30,9 @@ services:
     volumes:
       - wp_data:/var/www/html
       - ./wp-config.php:/var/www/html/wp-config.php
-      - ./php/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini
-      - ./php/php-fpm.conf:/usr/local/etc/php-fpm.d/php-fpm.conf
-      - ./php/php.ini:/usr/local/etc/php/conf.d/custom-php.ini
+      - ./opcache.ini:/usr/local/etc/php/conf.d/opcache.ini
+      - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
+      # - ./php/php.ini:/usr/local/etc/php/conf.d/custom-php.ini
     networks:
       - wordpress_net
       - monitoring_net
