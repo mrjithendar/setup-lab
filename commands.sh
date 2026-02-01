@@ -12,6 +12,7 @@ docker compose run --rm certbot renew --force-renewal
 docker compose run --rm certbot renew --dry-run
 
 docker restart nginx-server
+docker exec -it wordpress-app php -m | grep redis
 
 cat <<EOF | sudo tee /etc/sysctl.d/99-redis.conf
 vm.overcommit_memory = 1
