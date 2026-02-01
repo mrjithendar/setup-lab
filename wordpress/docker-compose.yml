@@ -37,23 +37,6 @@ services:
       - wordpress_net
       - monitoring_net
 
-  nginx:
-    image: nginx:alpine
-    container_name: nginx-server
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - wp_data:/var/www/html
-      - ./nginx:/etc/nginx/conf.d
-      - ./certbot/conf:/etc/letsencrypt
-    depends_on:
-      - wordpress
-    networks:
-      - wordpress_net
-      - monitoring_net
-
   redis:
     image: redis:7-alpine
     container_name: redis-cache
