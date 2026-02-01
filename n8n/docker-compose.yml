@@ -6,6 +6,11 @@ services:
     container_name: n8n
     restart: unless-stopped
     environment:
+      - N8N_HOST=jithendar.com
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_PATH=/n8n
+      - WEBHOOK_URL=https://jithendar.com/n8n
       - N8N_TRACING_ENABLED=true
       - N8N_TRACING_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
@@ -14,10 +19,6 @@ services:
       - N8N_METRICS_INCLUDE_DEFAULT_METRICS=true # Includes Node.js/system metrics
       - N8N_METRICS_INCLUDE_CACHE_METRICS=true   # Optional: Useful for monitoring performance
       - NODE_ENV=production
-      - N8N_HOST=jithendar.com
-      - N8N_PROTOCOL=https
-      - N8N_PORT=5678
-      - N8N_PATH=/n8n/
       - N8N_EDITOR_BASE_URL=https://jithendar.com/n8n/
       - WEBHOOK_URL=https://jithendar.com/n8n/
       - N8N_SECURE_COOKIE=true
