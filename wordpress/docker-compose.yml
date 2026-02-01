@@ -60,15 +60,6 @@ services:
       - wordpress_net
       - monitoring_net
 
-  certbot:
-    image: certbot/dns-cloudflare
-    container_name: certbot-cloudflare
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-    networks:
-      - wordpress_net
-      - monitoring_net
-
 volumes:
   db_data:
   wp_data:
