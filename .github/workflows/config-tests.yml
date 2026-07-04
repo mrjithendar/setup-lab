@@ -1,0 +1,25 @@
+name: config-tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate-configs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install -r tests/requirements-dev.txt
+
+      - name: Ensure PHP CLI is available (for wp-config.php lint)
+        run: php --version || sudo apt-get update && sudo apt-get install -y php-cli
+
+      - name: Run config validation tests
+        run: pytest -c tests/pytest.ini tests
