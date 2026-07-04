@@ -1,0 +1,7 @@
+# Copy this file to my.cnf and fill in real credentials.
+# my.cnf is gitignored and must NEVER be committed.
+[client]
+user=exporter
+password=CHANGE_ME_STRONG_PASSWORD
+host=mysql-database
+port=3306
