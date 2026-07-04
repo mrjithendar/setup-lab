@@ -25,6 +25,9 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
+    # Admin credentials (GF_SECURITY_ADMIN_USER/PASSWORD) come from .env — see .env.example
+    env_file:
+      - .env
     environment:
       GF_SERVER_ROOT_URL: https://jithendar.com/grafana/
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"

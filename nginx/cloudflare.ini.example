@@ -1,0 +1,6 @@
+# Copy this file to cloudflare.ini and fill in a real, scoped Cloudflare API token.
+# cloudflare.ini is gitignored and must NEVER be committed.
+# Create a token scoped to Zone:DNS:Edit for the target zone only:
+#   https://dash.cloudflare.com/profile/api-tokens
+# Then: chmod 600 cloudflare.ini
+dns_cloudflare_api_token = your-cloudflare-dns-api-token-here

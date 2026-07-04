@@ -1,0 +1,12 @@
+# Secrets / credentials — never commit these
+.env
+*.env
+!*.env.example
+nginx/cloudflare.ini
+monitoring/mysql-exporter/my.cnf
+
+# Editor / OS artifacts
+*.swp
+*.swo
+*~
+.DS_Store
