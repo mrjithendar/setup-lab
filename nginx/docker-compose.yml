@@ -11,7 +11,6 @@ services:
     volumes:
       - wordpress_wp_data:/var/www/html
       - ./conf:/etc/nginx/
-      - ./security.conf:/etc/nginx/snippets/security.conf
       - certbot_data:/etc/letsencrypt
     networks:
       - wordpress_net
