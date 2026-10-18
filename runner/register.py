@@ -54,8 +54,10 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except subprocess.CalledProcessError:
-        sys.exit('AWS secret retrieval or runner configuration failed. Check AWS access as the invoking user and runner diagnostics.')
+    except subprocess.CalledProcessError as error:
+        if error.cmd[0] == 'aws':
+            sys.exit('AWS secret retrieval failed. Check access to roboshop-ai in us-east-1 as the invoking user.')
+        sys.exit('Runner configuration failed. See the runner output above; AWS secret retrieval succeeded.')
     except (ValueError, KeyError):
         # Never include malformed secret contents in error output.
         sys.exit('Runner registration failed. Secret roboshop-ai must contain a valid github_token, runner_token, or password token; verify GitHub repository administration permissions.')

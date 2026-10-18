@@ -5,7 +5,7 @@ umask 077
 
 [[ $(uname -s) == Linux ]] || { echo 'This installer requires Linux.' >&2; exit 1; }
 
-[[ $EUID != 0 ]] || { echo 'Run as ec2-user (without sudo); the script uses sudo only for service setup.' >&2; exit 1; }
+[[ $EUID != 0 ]] || { echo 'Run as ec2-user (without sudo); the script uses sudo only for dependencies and service setup.' >&2; exit 1; }
 
 for command in aws python3 curl tar sha256sum flock sudo; do
   command -v "$command" >/dev/null || { echo "Missing prerequisite: $command" >&2; exit 1; }
@@ -38,6 +38,19 @@ if [[ ! -f .runner ]]; then
   tar xzf "$archive"
   rm -f -- "$archive"
   trap - EXIT
+  # The upstream dependency script does not recognize Amazon Linux reliably.
+  source /etc/os-release
+  case "$ID:${VERSION_ID:-}" in
+    amzn:2023)
+      sudo dnf install -y libicu openssl-libs krb5-libs zlib libstdc++ libgcc
+      ;;
+    amzn:2)
+      sudo yum install -y libicu openssl-libs krb5-libs zlib libstdc++ libgcc
+      ;;
+    *) sudo bash ./bin/installdependencies.sh;;
+  esac
+  # Fail before fetching credentials if the runner runtime cannot start.
+  ./config.sh --version
   # AWS is called as the invoking user, retaining their AWS profile/credentials.
   python3 "$script_dir/register.py" "$repo" "${RUNNER_NAME:-$(hostname)}"
 else

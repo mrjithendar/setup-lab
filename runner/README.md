@@ -6,7 +6,7 @@ Run on the Linux server as `ec2-user`, without sudo:
 bash runner/setup.sh
 ```
 
-Prerequisites: AWS CLI, Python 3, curl, tar, sha256sum, flock, sudo, systemd and the GitHub runner's operating-system libraries. If the runner reports missing libraries, install the dependencies for your Linux distribution before rerunning. The script uses sudo only to install/start the service; AWS credentials are read as the invoking user.
+Prerequisites: AWS CLI, Python 3, curl, tar, sha256sum, flock, sudo and systemd. Setup installs .NET runtime libraries using dnf/yum on Amazon Linux or the bundled dependency installer on other distributions, then checks the runner runtime before fetching the secret. The script uses sudo only for dependencies and service setup; AWS credentials are read as the invoking user.
 
 The installer registers with `https://github.com/mrjithendar/roboshop-ai`. It downloads runner 2.337.0 for x64 or arm64, verifies the official SHA-256 checksum, and fetches `roboshop-ai` from AWS Secrets Manager in `us-east-1` during initial registration. The AWS identity needs `secretsmanager:GetSecretValue` on that secret (and KMS decrypt permission if using a customer-managed encryption key).
 
