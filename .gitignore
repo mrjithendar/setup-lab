@@ -16,3 +16,6 @@ __pycache__/
 
 wp/config.json
 wp/.credential-fingerprint
+
+# GitHub runner credentials, downloaded binaries and job workspaces
+runner/actions-runner/
