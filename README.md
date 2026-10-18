@@ -91,6 +91,19 @@ No WordPress `.env` is created. `wp/.env.example` documents non-secret shell var
 
 HTTP bootstrap serves only ACME challenges and a health endpoint, returning 503 for the application until setup completes. The administrator installer is outside the web root. Already installed WordPress accounts are preserved. Enable the Redis Object Cache plugin separately if desired.
 
+## WordPress image build
+
+The Dockerfile pins the Redis extension to 6.1.0 and compiles with two parallel jobs by default. It checks that the extension loads during the build. PHP configuration is copied afterward so changing `php.ini` reuses the Redis build cache. The build context includes only the Dockerfile and `php.ini`; database files, certificates and runtime configuration are excluded.
+
+For a memory-constrained server, rebuild with one compilation job:
+
+```bash
+cd wp
+sudo bash compose.sh build --build-arg BUILD_JOBS=1 wordpress
+```
+
+`REDIS_VERSION` is also a build argument for deliberate extension upgrades. OPcache settings are inherited from the official WordPress image.
+
 ## Operations
 
 Use the wrapper instead of bare `docker compose`, so runtime variables are populated:

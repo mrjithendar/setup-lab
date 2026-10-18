@@ -12,6 +12,8 @@ text = pathlib.Path('systemd/wordpress-cert-renew.service').read_text()
 pathlib.Path('/etc/systemd/system/wordpress-cert-renew.service').write_text(text.replace('@WORKDIR@', root))
 PYTHON
 install -m 0644 systemd/wordpress-cert-renew.timer /etc/systemd/system/wordpress-cert-renew.timer
+chmod 0644 /etc/systemd/system/wordpress-cert-renew.service
+systemd-analyze verify /etc/systemd/system/wordpress-cert-renew.service /etc/systemd/system/wordpress-cert-renew.timer
 systemctl daemon-reload
 systemctl enable --now wordpress-cert-renew.timer
 systemctl list-timers wordpress-cert-renew.timer

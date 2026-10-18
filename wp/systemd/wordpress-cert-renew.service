@@ -6,5 +6,5 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory="@WORKDIR@"
+WorkingDirectory=@WORKDIR@
 ExecStart=/bin/bash "@WORKDIR@/renew-certificates.sh"
