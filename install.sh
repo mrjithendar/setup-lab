@@ -20,8 +20,7 @@ config.update(DOMAIN=domain, AWS_REGION=sys.argv[2], WORDPRESS_ADMIN_EMAIL=sys.a
 if '@' not in sys.argv[3] or not sys.argv[4]:
     raise SystemExit('Supply a valid email and administrator name.')
 target = root / 'config.json'
-if target.exists() and json.loads(target.read_text()) != config:
-    raise SystemExit('Existing config.json differs; edit it deliberately before rerunning.')
+target.unlink(missing_ok=True)
 target.write_text(json.dumps(config, indent=2) + '\n')
 PYTHON
 bash install-docker-ec2.sh

@@ -60,7 +60,7 @@ For another domain, use `https://YOUR_DOMAIN/wp-admin/` and the secret named aft
 
 ## Template and runtime variables
 
-`wp/config.json.template` contains only non-secret configuration. `install.sh` copies its settings into `wp/config.json`, substituting the domain, region, administrator email and username supplied as arguments. For manual configuration, copy the template to `wp/config.json` and edit it. This file is ignored by Git and contains no password.
+`wp/config.json.template` contains only non-secret configuration. After validating the arguments, `install.sh` removes any existing `wp/config.json` and recreates it from the template, substituting the domain, region, administrator email and username supplied as arguments. Manual changes to `wp/config.json` are replaced on each install. For manual configuration, copy the template to `wp/config.json` and edit it. This file is ignored by Git and contains no password.
 
 `wp/configure-secret.py` reads those settings, retrieves the AWS secret named **exactly after the supplied domain**, and launches the requested command with `SHARED_PASSWORD` in its environment. Compose references `${SHARED_PASSWORD}` for MariaDB root, the database user, Redis authentication and the initial WordPress administrator. WordPress session salts remain independent.
 
