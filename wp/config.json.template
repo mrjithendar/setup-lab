@@ -1,6 +1,7 @@
 {
   "AWS_REGION": "us-east-1",
   "DOMAIN": "",
+  "SECRET_NAME": "jithendar",
   "COMPOSE_PROJECT_NAME": "wordpress",
   "MYSQL_DATABASE": "wordpress",
   "MYSQL_USER": "wordpress",

@@ -23,7 +23,7 @@ sudo bash install.sh DOMAIN AWS_REGION EMAIL [ADMIN_USER]
 | --- | --- |
 | `sudo` | Runs with administrator permissions to install Docker and configure system services. |
 | `bash install.sh` | Starts the installation workflow. |
-| `jithendar.com` | The website domain and the AWS Secrets Manager secret name. Replace it with your domain; there is no hardcoded default. |
+| `jithendar.com` | The website domain. Replace it with your domain; the AWS secret name is configured separately. |
 | `us-east-1` | The AWS region where the secret is retrieved or created. This argument configures the secret’s region, not the server’s location. |
 | `YOUR_EMAIL` | Your real email address, used for Let’s Encrypt registration and the WordPress administrator account. |
 | `siteadmin` | The optional WordPress administrator username. Defaults to `siteadmin` when omitted. |
@@ -52,17 +52,17 @@ For the example domain above:
 
 - **Login URL:** https://jithendar.com/wp-admin/
 - **Username:** `siteadmin`, or the administrator username you supplied.
-- **Password:** The password stored in AWS Secrets Manager under `jithendar.com` in `us-east-1`.
+- **Password:** The password stored in AWS Secrets Manager under `jithendar` in `us-east-1`.
 
 Retrieve the password through the AWS Secrets Manager console. If the secret contains JSON, use its `password` field. If the secret did not exist, initialization creates it with a strong random password. The same password is used for MariaDB root, the WordPress database user, Redis and the initial WordPress administrator, as requested.
 
-For another domain, use `https://YOUR_DOMAIN/wp-admin/` and the secret named after that domain in the region you supplied. An already installed WordPress site keeps its existing administrator accounts and passwords; rerunning setup does not create or rename its administrator.
+For another domain, use `https://YOUR_DOMAIN/wp-admin/` and the secret configured by `SECRET_NAME` (default `jithendar`) in the region you supplied. An already installed WordPress site keeps its existing administrator accounts and passwords; rerunning setup does not create or rename its administrator.
 
 ## Template and runtime variables
 
 `wp/config.json.template` contains only non-secret configuration. After validating the arguments, `install.sh` removes any existing `wp/config.json` and recreates it from the template, substituting the domain, region, administrator email and username supplied as arguments. Manual changes to `wp/config.json` are replaced on each install. For manual configuration, copy the template to `wp/config.json` and edit it. This file is ignored by Git and contains no password.
 
-`wp/configure-secret.py` reads those settings, retrieves the AWS secret named **exactly after the supplied domain**, and launches the requested command with `SHARED_PASSWORD` in its environment. Compose references `${SHARED_PASSWORD}` for MariaDB root, the database user, Redis authentication and the initial WordPress administrator. WordPress session salts remain independent.
+`wp/configure-secret.py` reads those settings, retrieves the AWS secret named by `SECRET_NAME` (default **`jithendar`**, independent of the website domain), and launches the requested command with `SHARED_PASSWORD` in its environment. Compose references `${SHARED_PASSWORD}` for MariaDB root, the database user, Redis authentication and the initial WordPress administrator. WordPress session salts remain independent.
 
 Only initialization creates a missing secret: a cryptographically random 64-character hexadecimal password (256 bits). Existing secrets may be a plain password or JSON containing a `password` field. Access-denied/network errors never trigger creation. Runtime commands and renewal only read the secret.
 
@@ -111,7 +111,7 @@ Keep the checkout at its permanent path; rerun `install-renewal.sh` after moving
 
 ## AWS permissions
 
-The instance role needs `secretsmanager:GetSecretValue` and, for first-time initialization, `secretsmanager:CreateSecret`, scoped to `arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:YOUR_DOMAIN-*`. Customer-managed encryption keys require suitable KMS permissions. Newly created secrets use the default AWS-managed Secrets Manager key. Prefer an instance role; sudo does not automatically inherit personal AWS profiles.
+The instance role needs `secretsmanager:GetSecretValue` and, for first-time initialization, `secretsmanager:CreateSecret`, scoped to `arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:jithendar-*`. Customer-managed encryption keys require suitable KMS permissions. Newly created secrets use the default AWS-managed Secrets Manager key. Prefer an instance role; sudo does not automatically inherit personal AWS profiles.
 
 ## Existing installations
 

@@ -87,6 +87,7 @@ class SecretTests(unittest.TestCase):
             password = 'a$HOME ${FOO} $$ # "quotes" \ slash !'
             client.get_secret_value.return_value = {'SecretString': password}
             execute = self.run_main(root, client, True)
+            client.get_secret_value.assert_called_once_with(SecretId='jithendar')
             self.assertEqual(execute.call_args.args[2]['SHARED_PASSWORD'], password)
             self.assertEqual(execute.call_args.args[:2], ('echo', ['echo', 'ready']))
             self.assertFalse((root / '.env').exists())

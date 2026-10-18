@@ -47,7 +47,7 @@ def main():
         parser.error("Supply a command after --")
     root = Path(__file__).resolve().parent
     config = json.loads((root / "config.json").read_text())
-    secret_name = config["DOMAIN"]
+    secret_name = config.get("SECRET_NAME", "jithendar")
     client = boto3.client("secretsmanager", region_name=config["AWS_REGION"])
     marker = root / ".credential-fingerprint"
     initialized = (root / "db").exists() and any((root / "db").iterdir())
