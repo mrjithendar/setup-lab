@@ -12,8 +12,12 @@ for command in aws python3 curl tar sha256sum flock sudo; do
 done
 
 script_dir=$(cd -- "$(dirname -- "$0")" && pwd -P)
-runner_dir=${RUNNER_DIR:-"$script_dir/actions-runner"}
-mkdir -p -- "$runner_dir"
+runner_dir=${RUNNER_DIR:-"$HOME/actions-runner"}
+mkdir -p -- "$runner_dir" || {
+  echo 'Cannot create runner directory. Set RUNNER_DIR to a directory writable by your user.' >&2
+  exit 1
+}
+[[ -w "$runner_dir" ]] || { echo "Runner directory is not writable: $runner_dir" >&2; exit 1; }
 cd -- "$runner_dir"
 exec 9>.setup.lock
 flock -n 9 || { echo 'Another runner installation is running.' >&2; exit 1; }

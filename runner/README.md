@@ -20,7 +20,7 @@ The AWS secret is not printed or written to a file. The registration token is pa
 
 Repeat runs preserve the existing registration and ensure its service is started. A directory registered to another repository is rejected. No secret is needed again for an already registered runner. The service runs as the invoking user and survives logout/reboot.
 
-Optional environment variables: `RUNNER_NAME` (default hostname), `RUNNER_DIR` (default `runner/actions-runner`). Keep the runner directory at a permanent location. The default directory is Git-ignored; keep custom directories outside the repository.
+Optional environment variables: `RUNNER_NAME` (default hostname), `RUNNER_DIR` (default `$HOME/actions-runner`). Keep the runner directory at a permanent location. The default directory is outside the checkout, so the checkout need not be writable. Keep custom directories outside the repository.
 
 Validation:
 
