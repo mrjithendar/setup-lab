@@ -1,73 +1,106 @@
 services:
-
   db:
-    image: mariadb:11
-    container_name: wordpress-db
+    image: mariadb:11.4
     restart: unless-stopped
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --max_allowed_packet=64M
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --max_allowed_packet=64M]
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      MYSQL_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
+      MYSQL_ROOT_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
     volumes:
       - ./db:/var/lib/mysql
-    networks:
-      - wordpress
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks: [wordpress]
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
-    container_name: wordpress-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    environment:
+      REDIS_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
+    command: [sh, -c, 'exec redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass "$$REDIS_PASSWORD"']
     volumes:
       - ./redis:/data
-    networks:
-      - wordpress
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -qx PONG']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [wordpress]
+    logging: *logging
 
   wordpress:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: jithendar-wordpress:php8.3-redis
-    container_name: wordpress
+    build: .
+    image: local/wordpress:php8.3-redis
     restart: unless-stopped
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
+      SHARED_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
+      WORDPRESS_ADMIN_USER: ${WORDPRESS_ADMIN_USER:?Run configure-secret.py}
+      WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL:?Run configure-secret.py}
       WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: ${MYSQL_USER}
-      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
-      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      WORDPRESS_DB_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_REDIS_HOST', 'redis');
         define('WP_REDIS_PORT', 6379);
+        define('WP_REDIS_PASSWORD', getenv('SHARED_PASSWORD'));
+        define('DISALLOW_FILE_EDIT', true);
     volumes:
       - ./wordpress:/var/www/html
-    networks:
-      - wordpress
+    healthcheck:
+      test: [CMD, php, -r, "exit(@fsockopen('127.0.0.1', 80) ? 0 : 1);"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks: [wordpress]
+    logging: *logging
 
   nginx:
-    image: nginx:alpine
-    container_name: wordpress-nginx
+    image: nginx:stable-alpine
     restart: unless-stopped
     depends_on:
-      - wordpress
-    ports:
-      - "80:80"
-      - "443:443"
+      wordpress:
+        condition: service_healthy
+    ports: ["80:80", "443:443"]
     volumes:
       - ./nginx:/etc/nginx/conf.d:ro
-      - ./wordpress:/var/www/html:ro
       - ./certbot/www:/var/www/certbot:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    networks:
-      - wordpress
+      - ./certbot/conf:/etc/letsencrypt:ro
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/healthz]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [wordpress]
+    logging: *logging
+
+  certbot:
+    image: certbot/certbot:latest
+    profiles: [tools]
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    logging: *logging
 
 networks:
   wordpress:
+    # Retain the external network expected by the optional n8n stack.
+    name: wordpress_wordpress
     driver: bridge

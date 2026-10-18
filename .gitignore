@@ -1,0 +1,15 @@
+# Local credentials and persistent state
+**/.env
+**/.env.*
+!**/.env.example
+.DS_Store
+wp/db/
+wp/redis/
+wp/wordpress/
+wp/certbot/
+wp/nginx/default.conf
+n8n/postgres/
+backups/
+
+.venv/
+__pycache__/
