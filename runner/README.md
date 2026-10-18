@@ -22,7 +22,104 @@ Repeat runs preserve the existing registration and ensure its service is started
 
 Optional environment variables: `RUNNER_NAME` (default hostname), `RUNNER_DIR` (default `$HOME/actions-runner`). Keep the runner directory at a permanent location. The default directory is outside the checkout, so the checkout need not be writable. Keep custom directories outside the repository.
 
-Validation:
+## Check runner status
+
+Run these commands as the user who installed the runner (`ec2-user`). If you used a custom `RUNNER_DIR`, substitute that directory below.
+
+```bash
+cd "$HOME/actions-runner"
+sudo ./svc.sh status
+```
+
+Expected service state: `active (running)`. In [repository Settings → Actions → Runners](https://github.com/mrjithendar/roboshop-ai/settings/actions/runners), check whether the runner is **Idle** (ready), **Active** (executing a job), or **Offline**. A running Linux service alone does not prove that GitHub is connected.
+
+For the exact systemd unit and its boot setting:
+
+```bash
+cd "$HOME/actions-runner"
+runner_service=$(cat .service)
+sudo systemctl status "$runner_service" --no-pager -l
+sudo systemctl is-enabled "$runner_service"
+```
+
+If `.service` is missing, service installation has not completed. Return to your checkout and rerun `bash runner/setup.sh` after fixing the installation error.
+
+## Logs and service controls
+
+Show recent logs or follow live activity (Ctrl+C stops following):
+
+```bash
+cd "$HOME/actions-runner"
+runner_service=$(cat .service)
+sudo journalctl -u "$runner_service" -n 100 --no-pager -l
+sudo journalctl -u "$runner_service" -f
+```
+
+Runner diagnostic files are in `$HOME/actions-runner/_diag/`: `Runner_*.log` covers the runner process; `Worker_*.log` covers individual jobs. List recent files, then open the relevant file with `less`:
+
+```bash
+ls -lt "$HOME/actions-runner/_diag/"
+```
+
+Start or stop the service:
+
+```bash
+cd "$HOME/actions-runner"
+sudo ./svc.sh start
+# Stop only when the runner is idle, to avoid interrupting a job.
+sudo ./svc.sh stop
+```
+
+To restart an idle runner:
+
+```bash
+cd "$HOME/actions-runner"
+runner_service=$(cat .service)
+sudo systemctl restart "$runner_service"
+sudo ./svc.sh status
+```
+
+## Basic troubleshooting
+
+| Symptom | Check or fix |
+| --- | --- |
+| `Permission denied` creating the runner directory | From the checkout, run `RUNNER_DIR="$HOME/actions-runner" bash runner/setup.sh`. Run setup as `ec2-user`, without sudo. |
+| Missing `libicu` / .NET dependencies | On Amazon Linux 2023, run the dependency command below, then rerun setup from the checkout. Updated setup installs these automatically. |
+| AWS `AccessDenied` or secret not found | Run the AWS checks below as `ec2-user`. Confirm the account, region and secret permission. `sudo aws` can use a different identity. |
+| GitHub registration returns 401/403/404 | Check the token's validity, repository access and Administration write permission for a fine-grained PAT. A 404 may indicate missing access to the repository. |
+| Registration token expired | Replace the token in the secret with a fresh registration token, or use a PAT so setup can request a fresh one. Then rerun setup. |
+| Service running but runner Offline | Inspect the journal and `_diag` logs; check DNS, outbound HTTPS, proxy configuration and system time. |
+| Workflow queued while runner Idle | Ensure the job's `runs-on` labels match this runner, and the runner is available to this repository. |
+| Docker job fails | Run `docker info` as the runner user and `sudo systemctl status docker --no-pager`. Check daemon availability and the runner user's socket permissions. |
+| `.runner` exists but runner was removed in GitHub | Rerunning setup preserves the local registration. Follow GitHub's runner removal/re-registration process; changing the AWS secret alone does not re-register it. |
+
+Amazon Linux 2023 dependency repair:
+
+```bash
+sudo dnf install -y libicu openssl-libs krb5-libs zlib libstdc++ libgcc
+```
+
+Check AWS identity and secret read access without displaying the token:
+
+```bash
+aws sts get-caller-identity
+aws secretsmanager get-secret-value   --secret-id roboshop-ai --region us-east-1   --query '{Name:Name,ARN:ARN,VersionId:VersionId}' --output json
+```
+
+Setup reads `roboshop-ai` in `us-east-1` only during initial registration. Your `password` field must contain a GitHub token. An already configured runner uses its saved GitHub credentials; restarting it does not fetch the AWS secret again.
+
+Basic network, clock and disk checks:
+
+```bash
+curl -I --connect-timeout 10 https://github.com
+curl -I --connect-timeout 10 https://api.github.com
+timedatectl status
+df -h "$HOME/actions-runner"
+```
+
+These HTTP checks cover basic connectivity, not every Actions endpoint. For deeper diagnostics, see [GitHub's runner monitoring and troubleshooting guide](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/monitor-and-troubleshoot).
+
+## Script validation
 
 ```bash
 bash -n runner/setup.sh
