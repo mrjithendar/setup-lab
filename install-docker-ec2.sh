@@ -5,7 +5,7 @@ set -euo pipefail
 source /etc/os-release
 case "$ID:$VERSION_ID" in
   amzn:2023)
-    dnf install -y docker curl git python3 python3-pip
+    dnf install -y docker curl git python3 python3-pip --allowerasing
     case "$(uname -m)" in x86_64|aarch64) arch=$(uname -m);; *) echo 'Unsupported architecture' >&2; exit 1;; esac
     compose_version=${COMPOSE_VERSION:-v5.6.0}
     temp_dir=$(mktemp -d)

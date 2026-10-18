@@ -4,14 +4,59 @@ Separate scripts install Docker, MariaDB, Redis, WordPress, Nginx, Let's Encrypt
 
 ## Run on the server
 
-Use Ubuntu 22.04/24.04 or Amazon Linux 2023. Point `your domain` DNS to the server, allow inbound TCP 80/443 and outbound HTTPS, and attach an EC2 IAM role with Secrets Manager permissions. Keep port 80 reachable for renewal.
+Use Ubuntu 22.04/24.04 or Amazon Linux 2023. Point your domain’s DNS to the server, allow inbound TCP 80/443 and outbound HTTPS, and attach an EC2 IAM role with Secrets Manager permissions. Keep port 80 reachable for renewal.
 
 ```bash
 cd /opt/wordpress_docker
-sudo bash install.sh example.com us-east-1 YOUR_EMAIL siteadmin
+sudo bash install.sh jithendar.com us-east-1 YOUR_EMAIL siteadmin
 ```
 
-Supply your domain as the first argument, followed by the AWS region, real email and optional administrator username. There is no default domain. Setup accepts the Let's Encrypt terms and configures the canonical hostname `your domain`, without `www`.
+Replace `YOUR_EMAIL` with your actual email address before running. `/opt/wordpress_docker` is an example installation directory; use the path where you copied this repository.
+
+### Command arguments
+
+```text
+sudo bash install.sh DOMAIN AWS_REGION EMAIL [ADMIN_USER]
+```
+
+| Part | Purpose |
+| --- | --- |
+| `sudo` | Runs with administrator permissions to install Docker and configure system services. |
+| `bash install.sh` | Starts the installation workflow. |
+| `jithendar.com` | The website domain and the AWS Secrets Manager secret name. Replace it with your domain; there is no hardcoded default. |
+| `us-east-1` | The AWS region where the secret is retrieved or created. This argument configures the secret’s region, not the server’s location. |
+| `YOUR_EMAIL` | Your real email address, used for Let’s Encrypt registration and the WordPress administrator account. |
+| `siteadmin` | The optional WordPress administrator username. Defaults to `siteadmin` when omitted. |
+
+Setup accepts the Let’s Encrypt terms and configures the supplied hostname. Additional hostnames such as `www` are not automatically included.
+
+### What is `siteadmin`?
+
+`siteadmin` is the username for the administrator account created inside WordPress on a fresh installation. It can manage the website’s content, users, themes, plugins and settings. It is not a Linux login, AWS identity or database username.
+
+The installer saves this value as `WORDPRESS_ADMIN_USER` in the non-secret `wp/config.json`, passes it into the WordPress container, and uses it in `wp/install-wordpress.php` when creating the initial administrator. You can choose another username:
+
+```bash
+sudo bash install.sh jithendar.com us-east-1 you@example.com myadmin
+```
+
+Replace the example email with your own. To use the default username, omit the final argument:
+
+```bash
+sudo bash install.sh jithendar.com us-east-1 you@example.com
+```
+
+### Log in after installation
+
+For the example domain above:
+
+- **Login URL:** https://jithendar.com/wp-admin/
+- **Username:** `siteadmin`, or the administrator username you supplied.
+- **Password:** The password stored in AWS Secrets Manager under `jithendar.com` in `us-east-1`.
+
+Retrieve the password through the AWS Secrets Manager console. If the secret contains JSON, use its `password` field. If the secret did not exist, initialization creates it with a strong random password. The same password is used for MariaDB root, the WordPress database user, Redis and the initial WordPress administrator, as requested.
+
+For another domain, use `https://YOUR_DOMAIN/wp-admin/` and the secret named after that domain in the region you supplied. An already installed WordPress site keeps its existing administrator accounts and passwords; rerunning setup does not create or rename its administrator.
 
 ## Template and runtime variables
 
