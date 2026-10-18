@@ -52,6 +52,7 @@ services:
       SHARED_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
       WORDPRESS_ADMIN_USER: ${WORDPRESS_ADMIN_USER:?Run configure-secret.py}
       WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL:?Run configure-secret.py}
+      DOMAIN: ${DOMAIN:?Pass DOMAIN to install.sh}
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
       WORDPRESS_DB_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}

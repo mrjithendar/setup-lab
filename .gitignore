@@ -13,3 +13,6 @@ backups/
 
 .venv/
 __pycache__/
+
+wp/config.json
+wp/.credential-fingerprint

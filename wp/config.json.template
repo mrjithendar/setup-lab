@@ -1,0 +1,9 @@
+{
+  "AWS_REGION": "us-east-1",
+  "DOMAIN": "",
+  "COMPOSE_PROJECT_NAME": "wordpress",
+  "MYSQL_DATABASE": "wordpress",
+  "MYSQL_USER": "wordpress",
+  "WORDPRESS_ADMIN_USER": "siteadmin",
+  "WORDPRESS_ADMIN_EMAIL": "you@example.com"
+}
