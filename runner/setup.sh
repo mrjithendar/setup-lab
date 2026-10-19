@@ -73,7 +73,7 @@ if [[ ! -f .runner ]]; then
   curl --fail --location --retry 3 --connect-timeout 15 \
     "https://github.com/actions/runner/releases/download/v2.337.0/actions-runner-linux-$arch-2.337.0.tar.gz" -o "$archive"
   printf '%s  %s\n' "$checksum" "$archive" | sha256sum --check --status
-  tar xzf "$archive"
+  tar --no-same-owner -xzf "$archive"
   rm -f -- "$archive"
   trap - EXIT
   # RPM/SUSE runtime libraries were installed above; Debian/Ubuntu package
@@ -99,5 +99,6 @@ if [[ ! -f .service ]]; then
   as_root ./svc.sh install "$(id -un)"
 fi
 
+as_root bash "$script_dir/fix-selinux.sh" "$runner_dir"
 as_root ./svc.sh start
 as_root ./svc.sh status

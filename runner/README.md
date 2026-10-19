@@ -189,3 +189,16 @@ bash setup.sh mrjithendar/roboshop-ai mrjithendar-github-pat us-east-1
 ```
 
 The AWS identity must have GetSecretValue permission for `mrjithendar-github-pat`. The PAT must grant access to the target repository and the required administrator permissions. Change the region argument if the secret lives elsewhere.
+
+## Repair SELinux `203/EXEC` failures
+
+Setup now applies a persistent `bin_t` context to the configured runner tree before starting its service. SELinux remains enabled. Existing rules are updated on reruns, and disabled/non-SELinux hosts skip this step. Only the validated runner directory is relabeled; its registration and credentials are preserved. New archives are extracted without adopting the archive creator’s numeric ownership.
+
+For an existing root installation, copy all updated `runner/` files to your server and run:
+
+```bash
+cd /root/setup-lab/runner
+bash repair-service.sh /root/actions-runner
+```
+
+This installs SELinux management tooling if missing, applies the persistent context, restores executable permission on `runsvc.sh`, and restarts the existing service. It does not fetch an AWS secret or register again. For a different runner directory, pass that directory instead; run the repair script as root or with sudo.
