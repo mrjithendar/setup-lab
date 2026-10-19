@@ -5,24 +5,30 @@ umask 077
 
 [[ $(uname -s) == Linux ]] || { echo 'This installer requires Linux.' >&2; exit 1; }
 
-[[ $EUID != 0 ]] || { echo 'Run as your regular Linux user without sudo; setup elevates package/service operations only.' >&2; exit 1; }
+# GitHub's config.sh requires this explicit opt-in when configuring as root.
+if [[ $EUID == 0 ]]; then
+  export RUNNER_ALLOW_RUNASROOT=1
+  as_root() { "$@"; }
+else
+  command -v sudo >/dev/null || { echo 'Install sudo or run setup from a root account.' >&2; exit 1; }
+  sudo -v
+  as_root() { sudo "$@"; }
+fi
 [[ -d /run/systemd/system ]] || { echo 'A running systemd host is required (not Alpine/OpenRC or a plain container).' >&2; exit 1; }
 case $(uname -m) in x86_64|aarch64|arm64) ;; *) echo 'Supported architectures: x86_64 and arm64.' >&2; exit 1;; esac
-command -v sudo >/dev/null || { echo 'An administrator must install sudo and grant your user access first.' >&2; exit 1; }
-sudo -v
 source /etc/os-release
 # Install prerequisites before checking for commands on minimal server images.
 if command -v apt-get >/dev/null; then
-  sudo apt-get update
-  sudo apt-get install -y ca-certificates curl tar gzip coreutils util-linux python3 python3-venv git
+  as_root apt-get update
+  as_root apt-get install -y ca-certificates curl tar gzip coreutils util-linux python3 python3-venv git
 elif command -v dnf >/dev/null || command -v yum >/dev/null; then
   package_manager=dnf
   command -v dnf >/dev/null || package_manager=yum
-  sudo "$package_manager" install -y ca-certificates tar gzip coreutils util-linux python3 python3-pip git libicu openssl-libs krb5-libs zlib libstdc++ libgcc
+  as_root "$package_manager" install -y ca-certificates tar gzip coreutils util-linux python3 python3-pip git libicu openssl-libs krb5-libs zlib libstdc++ libgcc
   # Keep curl-minimal where installed, avoiding RPM package conflicts.
-  command -v curl >/dev/null || sudo "$package_manager" install -y curl
+  command -v curl >/dev/null || as_root "$package_manager" install -y curl
 elif command -v zypper >/dev/null; then
-  sudo zypper --non-interactive install ca-certificates curl tar gzip coreutils util-linux python3 python3-pip git libicu libopenssl3 libkrb5-3 libz1 libstdc++6 libgcc_s1
+  as_root zypper --non-interactive install ca-certificates curl tar gzip coreutils util-linux python3 python3-pip git libicu libopenssl3 libkrb5-3 libz1 libstdc++6 libgcc_s1
 else
   echo "No supported package manager found on ${ID:-unknown}; supported: apt, dnf/yum, zypper." >&2
   exit 1
@@ -73,7 +79,7 @@ if [[ ! -f .runner ]]; then
   # RPM/SUSE runtime libraries were installed above; Debian/Ubuntu package
   # names vary by release, so use the runner's own dependency detection there.
   if command -v apt-get >/dev/null; then
-    sudo bash ./bin/installdependencies.sh
+    as_root bash ./bin/installdependencies.sh
   fi
   # Fail before fetching credentials if the runner runtime cannot start.
   ./config.sh --version
@@ -90,8 +96,8 @@ PY
 fi
 
 if [[ ! -f .service ]]; then
-  sudo ./svc.sh install "$(id -un)"
+  as_root ./svc.sh install "$(id -un)"
 fi
 
-sudo ./svc.sh start
-sudo ./svc.sh status
+as_root ./svc.sh start
+as_root ./svc.sh status

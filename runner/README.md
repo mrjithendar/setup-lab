@@ -1,6 +1,6 @@
 # GitHub Actions runner
 
-Run from the checkout as your regular Linux user (for example `ec2-user`, `ubuntu` or your own account), **without sudo**:
+Run from the checkout as root or your regular Linux user (for example `ec2-user` or `ubuntu`):
 
 ```bash
 bash runner/setup.sh mrjithendar/roboshop-ai roboshop-ai us-east-1
@@ -14,9 +14,9 @@ This is the single deployment entry point; keep `runner/register.py` beside it. 
 | `roboshop-ai` | AWS Secrets Manager secret holding a GitHub token |
 | `us-east-1` | AWS region containing that secret |
 
-Setup detects apt, dnf/yum or zypper and installs Python, download utilities, Git and runner runtime dependencies. It retains an existing curl/curl-minimal package. If AWS CLI is absent, setup installs AWS CLI v1 into a private `.setup-tools` virtual environment under the runner directory, without changing system Python. Existing AWS CLI v1/v2 installations are reused. AWS calls run as the invoking user; service and package operations use sudo.
+Setup detects apt, dnf/yum or zypper and installs Python, download utilities, Git and runner runtime dependencies. It retains an existing curl/curl-minimal package. If AWS CLI is absent, setup installs AWS CLI v1 into a private `.setup-tools` virtual environment under the runner directory, without changing system Python. Existing AWS CLI v1/v2 installations are reused. AWS calls run as the invoking user; service and package operations run directly for root, or use sudo for regular users.
 
-Targets are modern Ubuntu/Debian, CentOS Stream/RHEL/Rocky/AlmaLinux/Fedora/Amazon Linux and openSUSE/SLES systems with matching package repositories. Requires **systemd, Python 3.9+, x86_64 or arm64**, and a regular user with sudo access. Python is installed automatically, but an old release whose repositories provide only an older Python must be upgraded. Alpine/musl, OpenRC-only hosts, end-of-life releases and arbitrary Linux distributions are not guaranteed compatible. zypper package availability varies by SUSE release. Setup checks the runner runtime before fetching registration credentials.
+Targets are modern Ubuntu/Debian, CentOS Stream/RHEL/Rocky/AlmaLinux/Fedora/Amazon Linux and openSUSE/SLES systems with matching package repositories. Requires **systemd, Python 3.9+, x86_64 or arm64**, and either root or a regular user with sudo access. Python is installed automatically, but an old release whose repositories provide only an older Python must be upgraded. Alpine/musl, OpenRC-only hosts, end-of-life releases and arbitrary Linux distributions are not guaranteed compatible. zypper package availability varies by SUSE release. Setup checks the runner runtime before fetching registration credentials.
 
 The installer downloads runner 2.337.0 and verifies its pinned SHA-256 checksum. Initial registration fetches the specified AWS secret. The AWS identity needs `secretsmanager:GetSecretValue` (plus KMS decrypt permission for a customer-managed key). Provide an EC2 instance role or configure AWS credentials/profile for your user before running. The installer does not create GitHub access tokens or AWS credentials. Outbound HTTPS to package repositories, GitHub, AWS and PyPI (when installing AWS CLI) is required.
 
@@ -143,3 +143,29 @@ Local validation: shell syntax and four registration tests pass. Package install
 Compatibility is bounded by [GitHub’s supported runner platforms](https://docs.github.com/en/actions/reference/runners/self-hosted-runners). The fallback CLI uses [AWS’s virtual-environment installation approach](https://docs.aws.amazon.com/cli/v1/userguide/install-virtualenv.html).
 
 References: [runner release and checksums](https://github.com/actions/runner/releases/tag/v2.337.0), [GitHub registration tokens](https://docs.github.com/en/rest/actions/self-hosted-runners#create-a-registration-token-for-a-repository).
+
+## Run as root
+
+From your Vultr root shell, after copying the updated runner files:
+
+```bash
+cd /root/setup-lab/runner
+bash setup.sh
+```
+
+Root installs do not require `sudo`. Setup sets `RUNNER_ALLOW_RUNASROOT=1` for GitHub runner configuration, uses `/root/actions-runner` by default, and installs the service with `User=root`. Workflow jobs on this runner therefore execute as root. AWS registration uses root’s AWS profile/environment or the instance role; another user’s AWS profile is not automatically reused.
+
+To specify the repository and AWS secret explicitly:
+
+```bash
+bash setup.sh mrjithendar/roboshop-ai roboshop-ai us-east-1
+```
+
+Check the service:
+
+```bash
+cd /root/actions-runner
+./svc.sh status
+```
+
+An existing service keeps its current user; this change does not migrate an already registered service from another account. Regular-user installations continue to run under that user with sudo used only for package/service operations.
