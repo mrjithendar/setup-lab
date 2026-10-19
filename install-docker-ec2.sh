@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
-# Run with sudo on a fresh Amazon Linux 2023 or Ubuntu 22.04/24.04 EC2 host.
+# Install prerequisites on supported systemd Linux hosts.
 set -euo pipefail
 [[ $EUID == 0 ]] || { echo 'Run with sudo.' >&2; exit 1; }
+[[ $(uname -s) == Linux && -d /run/systemd/system ]] || { echo 'A Linux host running systemd is required.' >&2; exit 1; }
+case "$(uname -m)" in x86_64|aarch64) ;; *) echo 'Supported architectures: x86_64, aarch64.' >&2; exit 1;; esac
 source /etc/os-release
-case "$ID:$VERSION_ID" in
-  amzn:2023)
-    dnf install -y docker curl git python3 python3-pip --allowerasing
+source "$(dirname "$0")/scripts/platform.sh"
+platform=$(select_platform "$ID" "$VERSION_ID") || { echo "Unsupported distribution: $ID $VERSION_ID. See README.md." >&2; exit 1; }
+case "$platform" in
+  amazon)
+    dnf install -y docker ca-certificates git python3 python3-pip util-linux
+    # curl-minimal already provides curl; installing full curl causes a conflict.
+    command -v curl >/dev/null || dnf install -y curl-minimal
     case "$(uname -m)" in x86_64|aarch64) arch=$(uname -m);; *) echo 'Unsupported architecture' >&2; exit 1;; esac
     compose_version=${COMPOSE_VERSION:-v5.6.0}
     temp_dir=$(mktemp -d)
@@ -25,15 +31,15 @@ case "$ID:$VERSION_ID" in
     (cd "$temp_dir"; awk -v file="$asset" '$2 == file || $2 == "*" file' buildx-checksums.txt > buildx-selected.sha256; test -s buildx-selected.sha256; sha256sum -c buildx-selected.sha256)
     install -m 0755 "$temp_dir/$asset" /usr/local/lib/docker/cli-plugins/docker-buildx
     ;;
-  ubuntu:22.04|ubuntu:24.04)
+  apt)
     apt-get update
-    apt-get install -y ca-certificates curl git python3 python3-venv
+    apt-get install -y ca-certificates curl git python3 python3-venv util-linux
     install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    curl -fsSL https://download.docker.com/linux/$ID/gpg -o /etc/apt/keyrings/docker.asc
     chmod a+r /etc/apt/keyrings/docker.asc
     cat > /etc/apt/sources.list.d/docker.sources <<EOF
 Types: deb
-URIs: https://download.docker.com/linux/ubuntu
+URIs: https://download.docker.com/linux/$ID
 Suites: ${UBUNTU_CODENAME:-$VERSION_CODENAME}
 Components: stable
 Architectures: $(dpkg --print-architecture)
@@ -42,9 +48,20 @@ EOF
     apt-get update
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     ;;
-  *) echo 'Supported: Amazon Linux 2023, Ubuntu 22.04/24.04.' >&2; exit 1;;
+  rpm)
+    dnf install -y ca-certificates git python3 python3-pip util-linux
+    command -v curl >/dev/null || dnf install -y curl-minimal
+    repo_os=$ID
+    case "$ID" in rocky|almalinux) repo_os=centos;; esac
+    curl -fsSL --retry 3 "https://download.docker.com/linux/$repo_os/docker-ce.repo" -o /etc/yum.repos.d/docker-ce.repo
+    dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    ;;
 esac
 systemctl enable --now docker
+if command -v firewall-cmd >/dev/null && firewall-cmd --state >/dev/null 2>&1; then
+  firewall-cmd --permanent --add-service=http --add-service=https
+  firewall-cmd --add-service=http --add-service=https
+fi
 buildx_output=$(docker buildx version)
 echo "$buildx_output"
 python3 - "$buildx_output" <<'PYTHON'

@@ -4,7 +4,7 @@ Separate scripts install Docker, MariaDB, Redis, WordPress, Nginx, Let's Encrypt
 
 ## Run on the server
 
-Use Ubuntu 22.04/24.04 or Amazon Linux 2023. Point your domain’s DNS to the server, allow inbound TCP 80/443 and outbound HTTPS, and attach an EC2 IAM role with Secrets Manager permissions. Keep port 80 reachable for renewal.
+Use a supported Linux host from the table below. Point your domain’s DNS to the server, allow inbound TCP 80/443 and outbound HTTPS, and attach an EC2 IAM role with Secrets Manager permissions. Keep port 80 reachable for renewal.
 
 ```bash
 cd /opt/wordpress_docker
@@ -141,3 +141,30 @@ python3 -m unittest discover -s tests -v
 Tests cover AWS read/create/error behavior, environment injection without writing passwords, changed-secret detection, and existing-database protection. The Compose round-trip test runs when Compose is available. This Mac has no working Compose plugin or running daemon, so that test is skipped; live server installation, real AWS calls and certificate issuance/renewal remain deployment checks.
 
 References: [AWS GetSecretValue](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/get-secret-value.html), [AWS CreateSecret](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/create-secret.html), [Certbot renewal](https://eff-certbot.readthedocs.io/en/stable/using.html#renewing-certificates).
+
+## Linux compatibility and rerunning setup
+
+Run the same command on each supported system:
+
+```bash
+sudo bash install.sh jithendar.com us-east-1 jithendardharmapuri@gmail.com jithendar
+```
+
+| Distribution | Installer route |
+| --- | --- |
+| Ubuntu 22.04, 24.04, 26.04; Debian 12, 13 | Docker apt repository |
+| CentOS Stream 9, 10 | Docker CentOS RPM repository |
+| Rocky Linux / AlmaLinux 9, 10 | Docker CentOS RPM repository (compatibility route) |
+| RHEL 9, 10 | Docker RHEL RPM repository; enabled OS repositories/subscription required |
+| Fedora | Docker Fedora RPM repository; release must still have available repositories |
+| Amazon Linux 2023 | Amazon Docker package and checksum-verified Compose/Buildx plugins |
+
+Requires systemd and x86_64 or aarch64. Old CentOS 7/8, Amazon Linux 2, Alpine/OpenRC and other unlisted systems are not automatically provisioned. No installer can guarantee compatibility with every Linux distribution or unavailable package repositories. These routes have not been exercised on live hosts here.
+
+Python and util-linux are installed before configuration generation. Existing `curl` (including `curl-minimal`) is retained; no `--allowerasing` is used. SELinux stays enabled: private bind mounts use `Z`, and certificate paths shared by Nginx/Certbot use `z`. Active firewalld configurations receive HTTP/HTTPS rules; cloud security groups and DNS still need to be configured separately.
+
+After an interrupted first installation, rerun with the desired arguments. Non-secret configuration can change while the database is empty. With existing database files, changes to domain, AWS region, database name/user or Compose project require migration. Email and administrator settings can be updated, but they do not rename or reset an existing WordPress account. The AWS password fingerprint check remains in place.
+
+The earlier `Existing config.json differs` error was an overly broad comparison; it has been replaced by these checks. Copy the updated scripts to the server before rerunning. Do not delete database files or credential fingerprints to bypass a migration check.
+
+Package installation follows [Docker’s CentOS instructions](https://docs.docker.com/engine/install/centos/) and [Debian instructions](https://docs.docker.com/engine/install/debian/).

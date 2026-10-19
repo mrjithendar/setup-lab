@@ -4,12 +4,12 @@ services:
     restart: unless-stopped
     command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --max_allowed_packet=64M]
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
-      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in config.json}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in config.json}
       MYSQL_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
       MYSQL_ROOT_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
     volumes:
-      - ./db:/var/lib/mysql
+      - ./db:/var/lib/mysql:Z
     healthcheck:
       test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
       interval: 10s
@@ -30,7 +30,7 @@ services:
       REDIS_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
     command: [sh, -c, 'exec redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass "$$REDIS_PASSWORD"']
     volumes:
-      - ./redis:/data
+      - ./redis:/data:Z
     healthcheck:
       test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -qx PONG']
       interval: 10s
@@ -54,16 +54,16 @@ services:
       WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL:?Run configure-secret.py}
       DOMAIN: ${DOMAIN:?Pass DOMAIN to install.sh}
       WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      WORDPRESS_DB_USER: ${MYSQL_USER:?Set MYSQL_USER in config.json}
       WORDPRESS_DB_PASSWORD: ${SHARED_PASSWORD:?Run configure-secret.py}
-      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in config.json}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_REDIS_HOST', 'redis');
         define('WP_REDIS_PORT', 6379);
         define('WP_REDIS_PASSWORD', getenv('SHARED_PASSWORD'));
         define('DISALLOW_FILE_EDIT', true);
     volumes:
-      - ./wordpress:/var/www/html
+      - ./wordpress:/var/www/html:Z
     healthcheck:
       test: [CMD, php, -r, "exit(@fsockopen('127.0.0.1', 80) ? 0 : 1);"]
       interval: 10s
@@ -81,9 +81,9 @@ services:
         condition: service_healthy
     ports: ["80:80", "443:443"]
     volumes:
-      - ./nginx:/etc/nginx/conf.d:ro
-      - ./certbot/www:/var/www/certbot:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./nginx:/etc/nginx/conf.d:ro,Z
+      - ./certbot/www:/var/www/certbot:ro,z
+      - ./certbot/conf:/etc/letsencrypt:ro,z
     healthcheck:
       test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/healthz]
       interval: 30s
@@ -96,8 +96,8 @@ services:
     image: certbot/certbot:latest
     profiles: [tools]
     volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot:z
+      - ./certbot/conf:/etc/letsencrypt:z
     logging: *logging
 
 networks:
