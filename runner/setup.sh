@@ -89,7 +89,7 @@ else
   python3 - "$repo" <<'PY'
 import json, sys
 from pathlib import Path
-if json.loads(Path('.runner').read_text()).get('gitHubUrl', '').rstrip('/').lower() != ('https://github.com/' + sys.argv[1]).lower():
+if json.loads(Path('.runner').read_text(encoding='utf-8-sig')).get('gitHubUrl', '').rstrip('/').lower() != ('https://github.com/' + sys.argv[1]).lower():
     raise SystemExit('Existing runner belongs to another repository; use a different RUNNER_DIR.')
 PY
   echo 'Runner already configured; ensuring its service is running.'
