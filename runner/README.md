@@ -169,3 +169,11 @@ cd /root/actions-runner
 ```
 
 An existing service keeps its current user; this change does not migrate an already registered service from another account. Regular-user installations continue to run under that user with sudo used only for package/service operations.
+
+## GitHub runner-registration returns 404
+
+AWS retrieval succeeding only confirms access to the secret; it does not validate the GitHub token. Verify the repository printed by setup. A registration token must be fresh (expires in one hour) and generated for that exact repository, not an organization or another repository.
+
+In GitHub, open the target repository → Settings → Actions → Runners → New self-hosted runner. Copy its registration token into the AWS secret as `{"runner_token":"YOUR_FRESH_TOKEN"}`, then rerun setup immediately. Alternatively store a personal access token as `github_token`; a fine-grained token must grant the target repository Administration read/write access. Setup exchanges it for a fresh registration token. Do not use the WordPress password or place a PAT under `runner_token`.
+
+Setup now prints the target repository and preserves safe diagnostic messages. It cannot determine the scope or expiry of an opaque registration token locally.

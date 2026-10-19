@@ -27,3 +27,9 @@ class RegistrationTests(unittest.TestCase):
         with patch('urllib.request.urlopen', side_effect=HTTPError('url', 403, 'denied', {}, None)):
             with self.assertRaisesRegex(ValueError, 'HTTP 403'):
                 registration_token({'github_token': 'ghp_example'}, 'owner/repo')
+
+    def test_pat_in_runner_token_rejected_with_actionable_message(self):
+        with patch('urllib.request.urlopen') as request:
+            with self.assertRaisesRegex(ValueError, 'Store it under github_token'):
+                registration_token({'runner_token': 'github_pat_example'}, 'owner/repo')
+            request.assert_not_called()
