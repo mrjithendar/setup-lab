@@ -1,14 +1,26 @@
 # GitHub Actions runner
 
-Run on the Linux server as `ec2-user`, without sudo:
+Run from the checkout as your regular Linux user (for example `ec2-user`, `ubuntu` or your own account), **without sudo**:
 
 ```bash
-bash runner/setup.sh
+bash runner/setup.sh mrjithendar/roboshop-ai roboshop-ai us-east-1
 ```
 
-Prerequisites: AWS CLI, Python 3, curl, tar, sha256sum, flock, sudo and systemd. Setup installs .NET runtime libraries using dnf/yum on Amazon Linux or the bundled dependency installer on other distributions, then checks the runner runtime before fetching the secret. The script uses sudo only for dependencies and service setup; AWS credentials are read as the invoking user.
+This is the single deployment entry point; keep `runner/register.py` beside it. With no arguments, the same repository, secret and region are used.
 
-The installer registers with `https://github.com/mrjithendar/roboshop-ai`. It downloads runner 2.337.0 for x64 or arm64, verifies the official SHA-256 checksum, and fetches `roboshop-ai` from AWS Secrets Manager in `us-east-1` during initial registration. The AWS identity needs `secretsmanager:GetSecretValue` on that secret (and KMS decrypt permission if using a customer-managed encryption key).
+| Argument | Purpose |
+| --- | --- |
+| `mrjithendar/roboshop-ai` | GitHub repository in OWNER/REPOSITORY format |
+| `roboshop-ai` | AWS Secrets Manager secret holding a GitHub token |
+| `us-east-1` | AWS region containing that secret |
+
+Setup detects apt, dnf/yum or zypper and installs Python, download utilities, Git and runner runtime dependencies. It retains an existing curl/curl-minimal package. If AWS CLI is absent, setup installs AWS CLI v1 into a private `.setup-tools` virtual environment under the runner directory, without changing system Python. Existing AWS CLI v1/v2 installations are reused. AWS calls run as the invoking user; service and package operations use sudo.
+
+Targets are modern Ubuntu/Debian, CentOS Stream/RHEL/Rocky/AlmaLinux/Fedora/Amazon Linux and openSUSE/SLES systems with matching package repositories. Requires **systemd, Python 3.9+, x86_64 or arm64**, and a regular user with sudo access. Python is installed automatically, but an old release whose repositories provide only an older Python must be upgraded. Alpine/musl, OpenRC-only hosts, end-of-life releases and arbitrary Linux distributions are not guaranteed compatible. zypper package availability varies by SUSE release. Setup checks the runner runtime before fetching registration credentials.
+
+The installer downloads runner 2.337.0 and verifies its pinned SHA-256 checksum. Initial registration fetches the specified AWS secret. The AWS identity needs `secretsmanager:GetSecretValue` (plus KMS decrypt permission for a customer-managed key). Provide an EC2 instance role or configure AWS credentials/profile for your user before running. The installer does not create GitHub access tokens or AWS credentials. Outbound HTTPS to package repositories, GitHub, AWS and PyPI (when installing AWS CLI) is required.
+
+This installs the runner service, not workflow-specific software such as Docker. Workflows requiring Docker need a separately installed daemon and appropriate runner-user permissions.
 
 Supported secret JSON fields:
 
@@ -24,7 +36,7 @@ Optional environment variables: `RUNNER_NAME` (default hostname), `RUNNER_DIR` (
 
 ## Check runner status
 
-Run these commands as the user who installed the runner (`ec2-user`). If you used a custom `RUNNER_DIR`, substitute that directory below.
+Run these commands as the user who installed the runner (the account used for setup). If you used a custom `RUNNER_DIR`, substitute that directory below.
 
 ```bash
 cd "$HOME/actions-runner"
@@ -83,9 +95,9 @@ sudo ./svc.sh status
 
 | Symptom | Check or fix |
 | --- | --- |
-| `Permission denied` creating the runner directory | From the checkout, run `RUNNER_DIR="$HOME/actions-runner" bash runner/setup.sh`. Run setup as `ec2-user`, without sudo. |
+| `Permission denied` creating the runner directory | From the checkout, run `RUNNER_DIR="$HOME/actions-runner" bash runner/setup.sh`. Run setup as your runner user, without sudo. |
 | Missing `libicu` / .NET dependencies | On Amazon Linux 2023, run the dependency command below, then rerun setup from the checkout. Updated setup installs these automatically. |
-| AWS `AccessDenied` or secret not found | Run the AWS checks below as `ec2-user`. Confirm the account, region and secret permission. `sudo aws` can use a different identity. |
+| AWS `AccessDenied` or secret not found | Run the AWS checks below as your runner user. Confirm the account, region and secret permission. `sudo aws` can use a different identity. |
 | GitHub registration returns 401/403/404 | Check the token's validity, repository access and Administration write permission for a fine-grained PAT. A 404 may indicate missing access to the repository. |
 | Registration token expired | Replace the token in the secret with a fresh registration token, or use a PAT so setup can request a fresh one. Then rerun setup. |
 | Service running but runner Offline | Inspect the journal and `_diag` logs; check DNS, outbound HTTPS, proxy configuration and system time. |
@@ -106,7 +118,7 @@ aws sts get-caller-identity
 aws secretsmanager get-secret-value   --secret-id roboshop-ai --region us-east-1   --query '{Name:Name,ARN:ARN,VersionId:VersionId}' --output json
 ```
 
-Setup reads `roboshop-ai` in `us-east-1` only during initial registration. Your `password` field must contain a GitHub token. An already configured runner uses its saved GitHub credentials; restarting it does not fetch the AWS secret again.
+Setup reads the selected secret and region only during initial registration (defaults: `roboshop-ai`, `us-east-1`). Your `password` field must contain a GitHub token. An already configured runner uses its saved GitHub credentials; restarting it does not fetch the AWS secret again.
 
 Basic network, clock and disk checks:
 
@@ -125,5 +137,9 @@ These HTTP checks cover basic connectivity, not every Actions endpoint. For deep
 bash -n runner/setup.sh
 python3 -m unittest discover -s runner -p 'test_*.py' -v
 ```
+
+Local validation: shell syntax and four registration tests pass. Package installation, runner registration and systemd service startup have not been tested on live distribution instances.
+
+Compatibility is bounded by [GitHub’s supported runner platforms](https://docs.github.com/en/actions/reference/runners/self-hosted-runners). The fallback CLI uses [AWS’s virtual-environment installation approach](https://docs.aws.amazon.com/cli/v1/userguide/install-virtualenv.html).
 
 References: [runner release and checksums](https://github.com/actions/runner/releases/tag/v2.337.0), [GitHub registration tokens](https://docs.github.com/en/rest/actions/self-hosted-runners#create-a-registration-token-for-a-repository).

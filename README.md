@@ -75,8 +75,10 @@ No WordPress `.env` is created. `wp/.env.example` documents non-secret shell var
 | File | Purpose |
 | --- | --- |
 | `install.sh` | Installs prerequisites, prepares non-secret configuration and starts deployment |
-| `install-docker-ec2.sh` | Docker, Compose and Python installation |
+| `install-docker-ec2.sh` | Docker, Compose and Buildx installation only |
+| `scripts/install-dependencies.sh` | Python, pip/venv, Git, curl, common utilities and AWS CLI |
 | `requirements.txt` | AWS SDK dependency |
+| `scripts/install-aws-cli.sh` | Installs AWS CLI when missing; preserves existing installations |
 | `wp/.env.example` | Example non-secret variables for the install command |
 | `wp/config.json.template` | Non-secret configuration template |
 | `wp/configure-secret.py` | AWS password retrieval/creation and environment injection |
@@ -168,3 +170,26 @@ After an interrupted first installation, rerun with the desired arguments. Non-s
 The earlier `Existing config.json differs` error was an overly broad comparison; it has been replaced by these checks. Copy the updated scripts to the server before rerunning. Do not delete database files or credential fingerprints to bypass a migration check.
 
 Package installation follows [Docker’s CentOS instructions](https://docs.docker.com/engine/install/centos/) and [Debian instructions](https://docs.docker.com/engine/install/debian/).
+
+## AWS CLI installation
+
+The WordPress `install.sh` now installs AWS CLI automatically when `aws` is missing. Existing CLI v1/v2 installations are retained. The fallback installs CLI v1 into `/opt/wordpress-aws-cli`, an isolated Python environment, and exposes `/usr/local/bin/aws`. It does not modify the WordPress boto3 environment or configure AWS credentials.
+
+After setup, verify with `aws --version` (or `/usr/local/bin/aws --version` if your PATH excludes `/usr/local/bin`). Continue using an EC2 instance role or your configured AWS identity for Secrets Manager access.
+
+## Separate dependency setup
+
+Install or update the common host tools independently:
+
+```bash
+sudo bash scripts/install-dependencies.sh
+```
+
+This handles Python 3, pip/venv, Git, curl, CA certificates, util-linux (including flock), tar, gzip, coreutils and AWS CLI. Python and Git use the latest package versions offered by the configured distribution repositories. This does **not** guarantee the newest upstream Python minor release; it keeps the distribution-supported `python3` and does not replace the system interpreter with a source build. Existing AWS CLI installations are preserved; missing AWS CLI is installed by `scripts/install-aws-cli.sh`.
+
+The full `install.sh` automatically runs this dependency stage, followed by the Docker-only installer and WordPress deployment. Standalone Docker installation now requires the dependency stage first:
+
+```bash
+sudo bash scripts/install-dependencies.sh
+sudo bash install-docker-ec2.sh
+```

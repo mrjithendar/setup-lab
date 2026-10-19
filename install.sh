@@ -8,9 +8,10 @@ email=${3:?Supply your certificate and WordPress administrator email}
 admin=${4:-siteadmin}
 cd "$(dirname "$0")"
 # Bootstrap Python and flock before using them on minimal installations.
-bash install-docker-ec2.sh
+bash scripts/install-dependencies.sh
 exec 9>/run/lock/wordpress-install.lock
 flock -n 9 || { echo 'Another installation is running.' >&2; exit 1; }
+bash install-docker-ec2.sh
 python3 - "$domain" "$region" "$email" "$admin" <<'PYTHON'
 import json, pathlib, sys, re
 root = pathlib.Path('wp')

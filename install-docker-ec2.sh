@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install prerequisites on supported systemd Linux hosts.
+# Docker-only stage; run scripts/install-dependencies.sh first.
 set -euo pipefail
 [[ $EUID == 0 ]] || { echo 'Run with sudo.' >&2; exit 1; }
 [[ $(uname -s) == Linux && -d /run/systemd/system ]] || { echo 'A Linux host running systemd is required.' >&2; exit 1; }
@@ -7,11 +7,12 @@ case "$(uname -m)" in x86_64|aarch64) ;; *) echo 'Supported architectures: x86_6
 source /etc/os-release
 source "$(dirname "$0")/scripts/platform.sh"
 platform=$(select_platform "$ID" "$VERSION_ID") || { echo "Unsupported distribution: $ID $VERSION_ID. See README.md." >&2; exit 1; }
+for dependency in curl python3 sha256sum; do
+  command -v "$dependency" >/dev/null || { echo "Missing $dependency. Run scripts/install-dependencies.sh first." >&2; exit 1; }
+done
 case "$platform" in
   amazon)
-    dnf install -y docker ca-certificates git python3 python3-pip util-linux
-    # curl-minimal already provides curl; installing full curl causes a conflict.
-    command -v curl >/dev/null || dnf install -y curl-minimal
+    dnf install -y docker
     case "$(uname -m)" in x86_64|aarch64) arch=$(uname -m);; *) echo 'Unsupported architecture' >&2; exit 1;; esac
     compose_version=${COMPOSE_VERSION:-v5.6.0}
     temp_dir=$(mktemp -d)
@@ -33,7 +34,6 @@ case "$platform" in
     ;;
   apt)
     apt-get update
-    apt-get install -y ca-certificates curl git python3 python3-venv util-linux
     install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/$ID/gpg -o /etc/apt/keyrings/docker.asc
     chmod a+r /etc/apt/keyrings/docker.asc
@@ -49,8 +49,6 @@ EOF
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     ;;
   rpm)
-    dnf install -y ca-certificates git python3 python3-pip util-linux
-    command -v curl >/dev/null || dnf install -y curl-minimal
     repo_os=$ID
     case "$ID" in rocky|almalinux) repo_os=centos;; esac
     curl -fsSL --retry 3 "https://download.docker.com/linux/$repo_os/docker-ce.repo" -o /etc/yum.repos.d/docker-ce.repo

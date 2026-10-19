@@ -14,7 +14,7 @@ def registration_token(secret, repo):
     key = next((key for key in ('github_token', 'runner_token', 'password') if key in secret), 'runner_token')
     token = secret.get(key)
     if not isinstance(token, str) or not token.strip() or any(c.isspace() for c in token):
-        raise ValueError('Set github_token (GitHub access token) or runner_token (fresh registration token) in roboshop-ai. A generated password cannot register a runner.')
+        raise ValueError('Set github_token (GitHub access token) or runner_token (fresh registration token) in the configured AWS secret. A generated password cannot register a runner.')
     if key == 'runner_token' or (key == 'password' and not token.startswith(('ghp_', 'github_pat_'))):
         return token
     request = urllib.request.Request(
@@ -40,8 +40,8 @@ def registration_token(secret, repo):
 def main():
     repo, name = sys.argv[1:]
     result = subprocess.run([
-        'aws', 'secretsmanager', 'get-secret-value', '--secret-id', 'roboshop-ai',
-        '--region', 'us-east-1', '--output', 'json', '--no-cli-pager',
+        'aws', 'secretsmanager', 'get-secret-value', '--secret-id', os.environ.get('RUNNER_SECRET_NAME', 'roboshop-ai'),
+        '--region', os.environ.get('AWS_REGION', 'us-east-1'), '--output', 'json',
     ], check=True, capture_output=True, text=True)
     secret = json.loads(json.loads(result.stdout)['SecretString'])
     token = registration_token(secret, repo)
@@ -56,8 +56,8 @@ if __name__ == '__main__':
         main()
     except subprocess.CalledProcessError as error:
         if error.cmd[0] == 'aws':
-            sys.exit('AWS secret retrieval failed. Check access to roboshop-ai in us-east-1 as the invoking user.')
+            sys.exit('AWS secret retrieval failed. Check the configured secret and region as the invoking user.')
         sys.exit('Runner configuration failed. See the runner output above; AWS secret retrieval succeeded.')
     except (ValueError, KeyError):
         # Never include malformed secret contents in error output.
-        sys.exit('Runner registration failed. Secret roboshop-ai must contain a valid github_token, runner_token, or password token; verify GitHub repository administration permissions.')
+        sys.exit('Runner registration failed. The configured secret must contain a valid github_token, runner_token, or password token; verify GitHub repository administration permissions.')

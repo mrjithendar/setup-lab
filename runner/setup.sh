@@ -5,11 +5,32 @@ umask 077
 
 [[ $(uname -s) == Linux ]] || { echo 'This installer requires Linux.' >&2; exit 1; }
 
-[[ $EUID != 0 ]] || { echo 'Run as ec2-user (without sudo); the script uses sudo only for dependencies and service setup.' >&2; exit 1; }
-
-for command in aws python3 curl tar sha256sum flock sudo; do
-  command -v "$command" >/dev/null || { echo "Missing prerequisite: $command" >&2; exit 1; }
+[[ $EUID != 0 ]] || { echo 'Run as your regular Linux user without sudo; setup elevates package/service operations only.' >&2; exit 1; }
+[[ -d /run/systemd/system ]] || { echo 'A running systemd host is required (not Alpine/OpenRC or a plain container).' >&2; exit 1; }
+case $(uname -m) in x86_64|aarch64|arm64) ;; *) echo 'Supported architectures: x86_64 and arm64.' >&2; exit 1;; esac
+command -v sudo >/dev/null || { echo 'An administrator must install sudo and grant your user access first.' >&2; exit 1; }
+sudo -v
+source /etc/os-release
+# Install prerequisites before checking for commands on minimal server images.
+if command -v apt-get >/dev/null; then
+  sudo apt-get update
+  sudo apt-get install -y ca-certificates curl tar gzip coreutils util-linux python3 python3-venv git
+elif command -v dnf >/dev/null || command -v yum >/dev/null; then
+  package_manager=dnf
+  command -v dnf >/dev/null || package_manager=yum
+  sudo "$package_manager" install -y ca-certificates tar gzip coreutils util-linux python3 python3-pip git libicu openssl-libs krb5-libs zlib libstdc++ libgcc
+  # Keep curl-minimal where installed, avoiding RPM package conflicts.
+  command -v curl >/dev/null || sudo "$package_manager" install -y curl
+elif command -v zypper >/dev/null; then
+  sudo zypper --non-interactive install ca-certificates curl tar gzip coreutils util-linux python3 python3-pip git libicu libopenssl3 libkrb5-3 libz1 libstdc++6 libgcc_s1
+else
+  echo "No supported package manager found on ${ID:-unknown}; supported: apt, dnf/yum, zypper." >&2
+  exit 1
+fi
+for command in python3 curl tar sha256sum flock; do
+  command -v "$command" >/dev/null || { echo "Missing prerequisite after installation: $command" >&2; exit 1; }
 done
+python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else "Python 3.9+ required; upgrade this Linux release.")'
 
 script_dir=$(cd -- "$(dirname -- "$0")" && pwd -P)
 runner_dir=${RUNNER_DIR:-"$HOME/actions-runner"}
@@ -19,10 +40,21 @@ mkdir -p -- "$runner_dir" || {
 }
 [[ -w "$runner_dir" ]] || { echo "Runner directory is not writable: $runner_dir" >&2; exit 1; }
 cd -- "$runner_dir"
+runner_dir=$(pwd -P)
 exec 9>.setup.lock
 flock -n 9 || { echo 'Another runner installation is running.' >&2; exit 1; }
 
-repo=mrjithendar/roboshop-ai
+repo=${1:-mrjithendar/roboshop-ai}
+export RUNNER_SECRET_NAME=${2:-roboshop-ai}
+export AWS_REGION=${3:-us-east-1}
+[[ "$repo" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo 'Repository must be OWNER/REPOSITORY.' >&2; exit 1; }
+# Reuse AWS CLI if available; otherwise isolate it from system Python packages.
+if [[ ! -f .runner ]] && ! command -v aws >/dev/null; then
+  python3 -m venv .setup-tools
+  .setup-tools/bin/python -m pip install --disable-pip-version-check 'awscli>=1.32,<2'
+  export PATH="$runner_dir/.setup-tools/bin:$PATH"
+fi
+export AWS_PAGER=""
 
 if [[ ! -f .runner ]]; then
   case $(uname -m) in
@@ -38,17 +70,11 @@ if [[ ! -f .runner ]]; then
   tar xzf "$archive"
   rm -f -- "$archive"
   trap - EXIT
-  # The upstream dependency script does not recognize Amazon Linux reliably.
-  source /etc/os-release
-  case "$ID:${VERSION_ID:-}" in
-    amzn:2023)
-      sudo dnf install -y libicu openssl-libs krb5-libs zlib libstdc++ libgcc
-      ;;
-    amzn:2)
-      sudo yum install -y libicu openssl-libs krb5-libs zlib libstdc++ libgcc
-      ;;
-    *) sudo bash ./bin/installdependencies.sh;;
-  esac
+  # RPM/SUSE runtime libraries were installed above; Debian/Ubuntu package
+  # names vary by release, so use the runner's own dependency detection there.
+  if command -v apt-get >/dev/null; then
+    sudo bash ./bin/installdependencies.sh
+  fi
   # Fail before fetching credentials if the runner runtime cannot start.
   ./config.sh --version
   # AWS is called as the invoking user, retaining their AWS profile/credentials.
