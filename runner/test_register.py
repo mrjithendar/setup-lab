@@ -33,3 +33,11 @@ class RegistrationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Store it under github_token'):
                 registration_token({'runner_token': 'github_pat_example'}, 'owner/repo')
             request.assert_not_called()
+
+    def test_github_pat_field_exchanged_for_registration_token(self):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"token":"fresh-registration"}'
+        with patch('urllib.request.urlopen', return_value=response) as request:
+            self.assertEqual(registration_token({'github_pat': 'github_pat_example'}, 'owner/repo'), 'fresh-registration')
+            self.assertEqual(request.call_args.args[0].get_header('Authorization'), 'Bearer github_pat_example')
+            self.assertEqual(request.call_args.args[0].full_url, 'https://api.github.com/repos/owner/repo/actions/runners/registration-token')

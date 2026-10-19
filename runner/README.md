@@ -24,6 +24,8 @@ This installs the runner service, not workflow-specific software such as Docker.
 
 Supported secret JSON fields:
 
+- `github_pat`: alias for `github_token`; exchanged for a fresh registration token.
+
 - `github_token`: GitHub access token, exchanged for a fresh runner registration token. A fine-grained PAT needs repository Administration write permission.
 - `runner_token`: a fresh registration token from the repository's Actions runner setup page. Registration tokens expire after one hour.
 - `password`: existing secret format. Values starting with `ghp_` or `github_pat_` are treated as PATs; other values are treated as registration tokens. This must contain an actual GitHub token, not a generated password.
@@ -177,3 +179,13 @@ AWS retrieval succeeding only confirms access to the secret; it does not validat
 In GitHub, open the target repository → Settings → Actions → Runners → New self-hosted runner. Copy its registration token into the AWS secret as `{"runner_token":"YOUR_FRESH_TOKEN"}`, then rerun setup immediately. Alternatively store a personal access token as `github_token`; a fine-grained token must grant the target repository Administration read/write access. Setup exchanges it for a fresh registration token. Do not use the WordPress password or place a PAT under `runner_token`.
 
 Setup now prints the target repository and preserves safe diagnostic messages. It cannot determine the scope or expiry of an opaque registration token locally.
+
+### Existing `mrjithendar-github-pat` secret
+
+If this secret contains `{"github_pat":"YOUR_ACTUAL_PAT"}`, no rename is needed. Use the updated runner files and run:
+
+```bash
+bash setup.sh mrjithendar/roboshop-ai mrjithendar-github-pat us-east-1
+```
+
+The AWS identity must have GetSecretValue permission for `mrjithendar-github-pat`. The PAT must grant access to the target repository and the required administrator permissions. Change the region argument if the secret lives elsewhere.

@@ -14,8 +14,8 @@ class RegistrationError(ValueError):
 
 def registration_token(secret, repo):
     if not isinstance(secret, dict):
-        raise RegistrationError('Secret must be JSON with github_token or runner_token.')
-    key = next((key for key in ('github_token', 'runner_token', 'password') if key in secret), 'runner_token')
+        raise RegistrationError('Secret must be JSON with github_token, github_pat or runner_token.')
+    key = next((key for key in ('github_token', 'github_pat', 'runner_token', 'password') if key in secret), 'runner_token')
     token = secret.get(key)
     if not isinstance(token, str) or not token.strip() or any(c.isspace() for c in token):
         raise RegistrationError('Set github_token (GitHub access token) or runner_token (fresh registration token) in the configured AWS secret. A generated password cannot register a runner.')
@@ -72,4 +72,4 @@ if __name__ == '__main__':
         sys.exit(str(error))
     except (ValueError, KeyError):
         # Never include malformed secret contents in error output.
-        sys.exit('Runner registration failed. The configured secret must contain a valid github_token, runner_token, or password token; verify GitHub repository administration permissions.')
+        sys.exit('Runner registration failed. The configured secret must contain a valid github_token, github_pat, runner_token, or password token; verify GitHub repository administration permissions.')
